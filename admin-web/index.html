@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - Civic Issue Reporting</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Admin Dashboard</h1>
+      <p>Crowdsourced Civic Issue Reporting & Resolution System</p>
+    </header>
+
+    <main>
+      <section id="summary-cards">
+        <div class="card">
+          <h3>Total Issues</h3>
+          <p id="total-issues">0</p>
+        </div>
+        <div class="card">
+          <h3>Pending Issues</h3>
+          <p id="pending-issues">0</p>
+        </div>
+        <div class="card">
+          <h3>In Progress Issues</h3>
+          <p id="in-progress-issues">0</p>
+        </div>
+        <div class="card">
+          <h3>Resolved Issues</h3>
+          <p id="resolved-issues">0</p>
+        </div>
+        <div class="card">
+          <h3>High Priority Issues</h3>
+          <p id="high-priority-issues">0</p>
+        </div>
+      </section>
+
+      <sect ion id="filters-section">
+        <h2>Filters & Search</h2>
+        <div class="filters-container">
+          <div class="filter-group">
+            <label for="search-input">Search:</label>
+            <input
+              type="text"
+              id="search-input"
+              placeholder="Search by ID, Category, or Description"
+            />
+          </div>
+          <div class="filter-group">
+            <label for="status-filter">Status:</label>
+            <select id="status-filter">
+              <option value="">All</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="priority-filter">Priority:</label>
+            <select id="priority-filter">
+              <option value="">All</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="category-filter">Category:</label>
+            <select id="category-filter">
+              <option value="">All</option>
+              <!-- Categories will be populated dynamically -->
+            </select>
+          </div>
+        </div>
+      </sect>
+
+      <section id="issues-section">
+        <h2>Issues</h2>
+        <table id="issues-table">
+          <thead>
+            <tr>
+              <th>Issue ID</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Latitude</th>
+              <th>Longitude</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Created At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="issues-tbody">
+            <!-- Issues will be populated here -->
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
