@@ -52,8 +52,8 @@ public class IssueService {
             return false;
         }
 
-        // Validate status transition
-        if (!isValidStatusTransition(issue.getStatus(), newStatus)) {
+        // Only validate status transition if a new status is provided
+        if (newStatus != null && !isValidStatusTransition(issue.getStatus(), newStatus)) {
             return false;
         }
 

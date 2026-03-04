@@ -24,7 +24,11 @@ public class IssueController {
         return new ResponseEntity<>(createdIssue, HttpStatus.CREATED);
     }
 
-   
+    @GetMapping
+    public ResponseEntity<List<Issue>> getAllIssues() {
+        List<Issue> issues = issueService.getAllIssues();
+        return new ResponseEntity<>(issues, HttpStatus.OK);
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Issue> getIssueById(@PathVariable String id) {
@@ -50,7 +54,9 @@ public ResponseEntity<?> updateIssue(
         return ResponseEntity.badRequest().body("Invalid issue ID or status transition");
     }
 
-    return ResponseEntity.ok(issueService.getIssueById(id));
+    return issueService.getIssueById(id)
+        .map(issue -> ResponseEntity.ok(issue))
+        .orElse(ResponseEntity.notFound().build());
 }
 
 }

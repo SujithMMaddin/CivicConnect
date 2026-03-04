@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -20,6 +20,15 @@ type AdminDashboardScreenNavigationProp = StackNavigationProp<
 
 const AdminDashboardScreen: React.FC = () => {
   const navigation = useNavigation<AdminDashboardScreenNavigationProp>();
+  const [selectedFilter, setSelectedFilter] = useState<string>("all");
+
+  const filterCategories = [
+    { id: "all", label: "All" },
+    { id: "pothole", label: "Roads" },
+    { id: "streetlight", label: "Street Light" },
+    { id: "water", label: "Water" },
+    { id: "sanitation", label: "Sanitation" },
+  ];
 
   const stats = [
     { icon: "📊", label: "Total", value: "1,284", color: "blue" },
@@ -31,6 +40,7 @@ const AdminDashboardScreen: React.FC = () => {
   const issues = [
     {
       id: "RD-4921",
+      category: "pothole",
       title: "Large Pothole on 5th Ave Intersection",
       description:
         "Traffic flow is significantly affected. Reported 2 hours ago. Location near the central library.",
@@ -40,6 +50,7 @@ const AdminDashboardScreen: React.FC = () => {
     },
     {
       id: "WT-1205",
+      category: "water",
       title: "Water Leakage in Residential Block B",
       description:
         "Main pipe leakage observed near apartment 12. Pressure dropping in adjacent units.",
@@ -49,6 +60,7 @@ const AdminDashboardScreen: React.FC = () => {
     },
     {
       id: "EL-8832",
+      category: "streetlight",
       title: "Street Light Malfunction",
       description:
         "Light pole #43 blinking continuously. Technicians fixed the wiring fault.",
@@ -57,6 +69,12 @@ const AdminDashboardScreen: React.FC = () => {
       location: "East Side Park",
     },
   ];
+
+  // Filter issues based on selected category
+  const filteredIssues =
+    selectedFilter === "all"
+      ? issues
+      : issues.filter((issue) => issue.category === selectedFilter);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -294,7 +312,7 @@ const AdminDashboardScreen: React.FC = () => {
           >
             Category Filter
           </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => setSelectedFilter("all")}>
             <Text
               style={{
                 fontSize: 14,
@@ -308,32 +326,36 @@ const AdminDashboardScreen: React.FC = () => {
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={{ flexDirection: "row", gap: theme.spacing.sm }}>
-            {["All", "Roads", "Power", "Water", "Sanitation"].map(
-              (filter, index) => (
-                <TouchableOpacity
-                  key={index}
+            {filterCategories.map((filter) => (
+              <TouchableOpacity
+                key={filter.id}
+                onPress={() => setSelectedFilter(filter.id)}
+                style={{
+                  paddingHorizontal: theme.spacing.md,
+                  paddingVertical: theme.spacing.sm,
+                  borderRadius: theme.borderRadius.full,
+                  backgroundColor:
+                    selectedFilter === filter.id
+                      ? theme.colors.primary
+                      : "white",
+                  borderWidth: selectedFilter === filter.id ? 0 : 1,
+                  borderColor: theme.colors.slate[200],
+                }}
+              >
+                <Text
                   style={{
-                    paddingHorizontal: theme.spacing.md,
-                    paddingVertical: theme.spacing.sm,
-                    borderRadius: theme.borderRadius.full,
-                    backgroundColor:
-                      index === 0 ? theme.colors.primary : "white",
-                    borderWidth: index === 0 ? 0 : 1,
-                    borderColor: theme.colors.slate[200],
+                    fontSize: 14,
+                    fontWeight: "medium",
+                    color:
+                      selectedFilter === filter.id
+                        ? "white"
+                        : theme.colors.textLight,
                   }}
                 >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "medium",
-                      color: index === 0 ? "white" : theme.colors.textLight,
-                    }}
-                  >
-                    {filter}
-                  </Text>
-                </TouchableOpacity>
-              ),
-            )}
+                  {filter.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </ScrollView>
       </View>
@@ -377,7 +399,7 @@ const AdminDashboardScreen: React.FC = () => {
           <View
             style={{ gap: theme.spacing.md, paddingBottom: theme.spacing.xl }}
           >
-            {issues.map((issue, index) => (
+            {filteredIssues.map((issue, index) => (
               <View
                 key={index}
                 style={{

@@ -13,15 +13,16 @@ import {
 import { Issue, fetchIssues, updateIssueStatus } from "@/shared/api";
 
 const CATEGORIES = [
-  "Pothole",
-  "Street Light",
-  "Trash",
-  "Graffiti",
-  "Traffic Sign",
-  "Sidewalk",
-  "Parking",
-  "Noise",
-  "Other",
+  { value: "Pothole", label: "Pothole" },
+  { value: "Streetlight", label: "Street Light" },
+  { value: "Water", label: "Water" },
+  { value: "Trash", label: "Trash" },
+  { value: "Graffiti", label: "Graffiti" },
+  { value: "Traffic Sign", label: "Traffic Sign" },
+  { value: "Sidewalk", label: "Sidewalk" },
+  { value: "Parking", label: "Parking" },
+  { value: "Noise", label: "Noise" },
+  { value: "Other", label: "Other" },
 ];
 
 export default function AdminDashboard() {
@@ -74,7 +75,8 @@ export default function AdminDashboard() {
       const matchesPriority =
         priorityFilter === "All" || issue.priority === priorityFilter;
       const matchesCategory =
-        categoryFilter === "All" || issue.category === categoryFilter;
+        categoryFilter === "All" ||
+        issue.category.toLowerCase() === categoryFilter.toLowerCase();
 
       return (
         matchesSearch && matchesStatus && matchesPriority && matchesCategory
@@ -245,8 +247,8 @@ export default function AdminDashboard() {
               >
                 <option value="All">All Categories</option>
                 {CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+                  <option key={category.value} value={category.value}>
+                    {category.label}
                   </option>
                 ))}
               </select>
