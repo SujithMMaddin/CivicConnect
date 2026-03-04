@@ -9,6 +9,7 @@ export interface Issue {
   priority: "High" | "Medium" | "Low";
   status: "Pending" | "In Progress" | "Resolved";
   createdAt: string;
+  imageUrls?: string[];
 }
 
 export async function fetchIssues(): Promise<Issue[]> {

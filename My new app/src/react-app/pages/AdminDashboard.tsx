@@ -9,6 +9,7 @@ import {
   TrendingUp,
   Search,
   Filter,
+  Image,
 } from "lucide-react";
 import { Issue, fetchIssues, updateIssueStatus } from "@/shared/api";
 
@@ -303,6 +304,34 @@ export default function AdminDashboard() {
                 <p className="text-slate-700 mb-4 text-sm leading-relaxed">
                   {issue.description}
                 </p>
+
+                {/* Photos Section */}
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-slate-600 mb-2">
+                    Photos
+                  </label>
+                  {issue.imageUrls && issue.imageUrls.length > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <div className="relative group">
+                        <img
+                          src={issue.imageUrls[0]}
+                          alt="Issue photo"
+                          className="w-20 h-20 object-cover rounded-md transition-transform duration-200 group-hover:scale-110"
+                        />
+                      </div>
+                      {issue.imageUrls.length > 1 && (
+                        <span className="text-xs text-slate-500 font-medium">
+                          +{issue.imageUrls.length - 1} more
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-slate-400 text-sm">
+                      <Image className="w-4 h-4" />
+                      <span>No Image</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Priority Badge */}
                 <div className="mb-4">
