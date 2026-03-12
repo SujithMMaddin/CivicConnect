@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -85,10 +86,16 @@ const ReportIssueScreen: React.FC = () => {
   }, []);
 
   const categories = [
-    { id: "pothole", label: "Pothole", icon: "🕳️" },
-    { id: "streetlight", label: "Street Light", icon: "💡" },
-    { id: "sanitation", label: "Sanitation", icon: "🗑️" },
-    { id: "water", label: "Water Leak", icon: "💧" },
+    { id: "Pothole", label: "Pothole" },
+    { id: "Streetlight", label: "Street Light" },
+    { id: "Water", label: "Water" },
+    { id: "Trash", label: "Trash" },
+    { id: "Graffiti", label: "Graffiti" },
+    { id: "Traffic Sign", label: "Traffic Sign" },
+    { id: "Sidewalk", label: "Sidewalk" },
+    { id: "Parking", label: "Parking" },
+    { id: "Noise", label: "Noise" },
+    { id: "Other", label: "Other" },
   ];
 
   const takePhoto = async () => {
@@ -172,14 +179,12 @@ const ReportIssueScreen: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Upload images to Cloudinary if any
       const imageUrls: string[] = [];
       for (const imageUri of capturedImages) {
         const secureUrl = await uploadToCloudinary(imageUri);
         imageUrls.push(secureUrl);
       }
 
-      // Submit to backend with imageUrls
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/issues`, {
         method: "POST",
         headers: {
@@ -190,7 +195,7 @@ const ReportIssueScreen: React.FC = () => {
           description: description.trim(),
           latitude,
           longitude,
-          imageUrls, // New field
+          imageUrls,
         }),
       });
 
@@ -201,7 +206,7 @@ const ReportIssueScreen: React.FC = () => {
       const result = await response.json();
       Alert.alert("Success", "Your report has been submitted successfully!");
 
-      // Reset form including images
+      // Reset form
       setSelectedCategory(null);
       setDescription("");
       setAddress("");
@@ -232,8 +237,8 @@ const ReportIssueScreen: React.FC = () => {
         style={{
           flexDirection: "row",
           alignItems: "center",
-          padding: theme.spacing.md,
-          paddingBottom: theme.spacing.sm,
+          paddingHorizontal: theme.spacing.md,
+          paddingVertical: theme.spacing.sm,
           justifyContent: "space-between",
           backgroundColor: "white",
           borderBottomWidth: 1,
@@ -241,15 +246,10 @@ const ReportIssueScreen: React.FC = () => {
         }}
       >
         <TouchableOpacity
-          style={{
-            width: 48,
-            height: 48,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          style={{ padding: theme.spacing.sm }}
           onPress={() => navigation.goBack()}
         >
-          <Text style={{ fontSize: 24, color: theme.colors.textLight }}>✕</Text>
+          <Text style={{ fontSize: 22, color: theme.colors.textLight }}>✕</Text>
         </TouchableOpacity>
         <Text
           style={{
@@ -262,22 +262,15 @@ const ReportIssueScreen: React.FC = () => {
         >
           Report an Issue
         </Text>
-        <TouchableOpacity
-          style={{
-            width: 48,
-            height: 48,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text style={{ fontSize: 24, color: theme.colors.textLight }}>
+        <TouchableOpacity style={{ padding: theme.spacing.sm }}>
+          <Text style={{ fontSize: 22, color: theme.colors.textLight }}>
             ❓
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Progress Bar */}
-      <View style={{ padding: theme.spacing.md }}>
+      <View style={{ padding: theme.spacing.md, backgroundColor: "white" }}>
         <View
           style={{
             flexDirection: "row",
@@ -300,8 +293,8 @@ const ReportIssueScreen: React.FC = () => {
         </View>
         <View
           style={{
-            height: 4,
-            backgroundColor: theme.colors.slate[300],
+            height: 6,
+            backgroundColor: theme.colors.slate[200],
             borderRadius: theme.borderRadius.sm,
             overflow: "hidden",
           }}
@@ -317,7 +310,13 @@ const ReportIssueScreen: React.FC = () => {
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1 }}>
+      {/* Content Body */}
+      {/* ADDED: contentContainerStyle with bottom padding to prevent overlay issues */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Category Selection */}
         <View style={{ padding: theme.spacing.md }}>
           <Text
@@ -325,62 +324,66 @@ const ReportIssueScreen: React.FC = () => {
               fontSize: 18,
               fontWeight: "bold",
               color: theme.colors.textLight,
-              marginBottom: theme.spacing.sm,
+              marginBottom: theme.spacing.md,
             }}
           >
             What is the issue?
           </Text>
+
+          {/* FIX: Replaced flexWrap and minWidth logic with a strict percentage layout */}
           <View
             style={{
               flexDirection: "row",
               flexWrap: "wrap",
-              gap: theme.spacing.sm,
+              justifyContent: "space-between",
             }}
           >
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={{
-                  flex: 1,
-                  minWidth: 140,
-                  padding: theme.spacing.md,
-                  borderRadius: theme.borderRadius.lg,
-                  borderWidth: 2,
-                  borderColor:
-                    selectedCategory === category.id
+            {categories.map((category) => {
+              const isSelected = selectedCategory === category.id;
+              return (
+                <TouchableOpacity
+                  key={category.id}
+                  style={{
+                    width: "48%", // Forces exactly 2 columns
+                    marginBottom: theme.spacing.md,
+                    paddingVertical: theme.spacing.md,
+                    borderRadius: theme.borderRadius.lg,
+                    borderWidth: 2,
+                    borderColor: isSelected
                       ? theme.colors.primary
-                      : theme.colors.slate[300],
-                  backgroundColor:
-                    selectedCategory === category.id
+                      : theme.colors.slate[200],
+                    backgroundColor: isSelected
                       ? theme.colors.primary + "10"
                       : "white",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                onPress={() => setSelectedCategory(category.id)}
-              >
-                <Text style={{ fontSize: 32, marginBottom: theme.spacing.xs }}>
-                  {category.icon}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: "bold",
-                    color:
-                      selectedCategory === category.id
-                        ? theme.colors.primary
-                        : theme.colors.textLight,
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
+                  onPress={() => setSelectedCategory(category.id)}
                 >
-                  {category.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: isSelected ? "bold" : "600",
+                      color: isSelected
+                        ? theme.colors.primary
+                        : theme.colors.slate[600],
+                    }}
+                  >
+                    {category.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
         {/* Description */}
-        <View style={{ padding: theme.spacing.md }}>
+        <View
+          style={{
+            paddingHorizontal: theme.spacing.md,
+            paddingBottom: theme.spacing.md,
+          }}
+        >
           <Text
             style={{
               fontSize: 18,
@@ -400,8 +403,10 @@ const ReportIssueScreen: React.FC = () => {
               fontSize: 16,
               minHeight: 120,
               textAlignVertical: "top",
+              backgroundColor: theme.colors.slate[50],
             }}
             placeholder="Describe the issue in detail..."
+            placeholderTextColor={theme.colors.slate[400]}
             multiline
             value={description}
             onChangeText={setDescription}
@@ -409,7 +414,12 @@ const ReportIssueScreen: React.FC = () => {
         </View>
 
         {/* Location */}
-        <View style={{ padding: theme.spacing.md }}>
+        <View
+          style={{
+            paddingHorizontal: theme.spacing.md,
+            paddingBottom: theme.spacing.md,
+          }}
+        >
           <Text
             style={{
               fontSize: 18,
@@ -428,36 +438,36 @@ const ReportIssueScreen: React.FC = () => {
               borderColor: theme.colors.slate[300],
               borderRadius: theme.borderRadius.lg,
               paddingHorizontal: theme.spacing.md,
-              marginBottom: theme.spacing.sm,
+              marginBottom: theme.spacing.md,
+              backgroundColor: theme.colors.slate[50],
             }}
           >
-            <Text style={{ fontSize: 20, marginRight: theme.spacing.sm }}>
+            <Text style={{ fontSize: 18, marginRight: theme.spacing.sm }}>
               🔍
             </Text>
             <TextInput
               style={{
                 flex: 1,
                 fontSize: 16,
-                paddingVertical: theme.spacing.md,
+                paddingVertical: Platform.OS === "ios" ? 14 : 10,
               }}
               placeholder="Search for address..."
+              placeholderTextColor={theme.colors.slate[400]}
               value={address}
               onChangeText={setAddress}
             />
           </View>
+
           {locationPermission === false ? (
-            <View
-              style={{
-                height: 200,
-                borderWidth: 1,
-                borderColor: theme.colors.slate[300],
-                borderRadius: theme.borderRadius.lg,
-                backgroundColor: theme.colors.slate[100],
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text style={{ fontSize: 16, color: theme.colors.slate[600] }}>
+            <View style={mapPlaceholderStyle}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: theme.colors.slate[600],
+                  textAlign: "center",
+                  padding: 20,
+                }}
+              >
                 Location permission denied. Please enable location services to
                 use the map.
               </Text>
@@ -480,11 +490,7 @@ const ReportIssueScreen: React.FC = () => {
                   latitudeDelta: 0.01,
                   longitudeDelta: 0.01,
                 }}
-                onPress={(e: {
-                  nativeEvent: {
-                    coordinate: { latitude: number; longitude: number };
-                  };
-                }) => {
+                onPress={(e: any) => {
                   const coords = e.nativeEvent.coordinate;
                   setSelectedLocation(coords);
                   setLatitude(coords.latitude);
@@ -495,17 +501,7 @@ const ReportIssueScreen: React.FC = () => {
               </MapView>
             </View>
           ) : (
-            <View
-              style={{
-                height: 200,
-                borderWidth: 1,
-                borderColor: theme.colors.slate[300],
-                borderRadius: theme.borderRadius.lg,
-                backgroundColor: theme.colors.slate[100],
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+            <View style={mapPlaceholderStyle}>
               <ActivityIndicator size="large" color={theme.colors.primary} />
               <Text
                 style={{
@@ -518,42 +514,67 @@ const ReportIssueScreen: React.FC = () => {
               </Text>
             </View>
           )}
+
           {selectedLocation && (
             <Text
               style={{
                 fontSize: 14,
-                color: theme.colors.slate[600],
+                color: theme.colors.slate[500],
                 marginTop: theme.spacing.sm,
               }}
             >
-              Selected: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+              Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
             </Text>
           )}
         </View>
 
         {/* Photos */}
-        <View style={{ padding: theme.spacing.md }}>
-          <Text
+        <View
+          style={{
+            paddingHorizontal: theme.spacing.md,
+            paddingBottom: theme.spacing.md,
+          }}
+        >
+          <View
             style={{
-              fontSize: 18,
-              fontWeight: "bold",
-              color: theme.colors.textLight,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
               marginBottom: theme.spacing.sm,
             }}
           >
-            Add Photos
-          </Text>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "bold",
+                color: theme.colors.textLight,
+              }}
+            >
+              Add Photos
+            </Text>
+            <Text style={{ fontSize: 14, color: theme.colors.slate[500] }}>
+              {capturedImages.length}/3 images
+            </Text>
+          </View>
+
+          {/* Image Previews */}
           {capturedImages.length > 0 && (
             <View
               style={{
                 flexDirection: "row",
                 flexWrap: "wrap",
-                gap: theme.spacing.sm,
                 marginBottom: theme.spacing.md,
               }}
             >
               {capturedImages.map((uri, index) => (
-                <View key={index} style={{ position: "relative" }}>
+                <View
+                  key={index}
+                  style={{
+                    marginRight: theme.spacing.md,
+                    marginBottom: theme.spacing.md,
+                    position: "relative",
+                  }}
+                >
                   <Image
                     source={{ uri }}
                     style={{
@@ -567,14 +588,16 @@ const ReportIssueScreen: React.FC = () => {
                   <TouchableOpacity
                     style={{
                       position: "absolute",
-                      top: -5,
-                      right: -5,
-                      backgroundColor: theme.colors.slate[600],
-                      borderRadius: 10,
-                      width: 20,
-                      height: 20,
+                      top: -8,
+                      right: -8,
+                      backgroundColor: theme.colors.slate[800],
+                      borderRadius: 12,
+                      width: 24,
+                      height: 24,
                       alignItems: "center",
                       justifyContent: "center",
+                      borderWidth: 2,
+                      borderColor: "white",
                     }}
                     onPress={() => {
                       const newImages = capturedImages.filter(
@@ -590,53 +613,55 @@ const ReportIssueScreen: React.FC = () => {
                         fontWeight: "bold",
                       }}
                     >
-                      ×
+                      ✕
                     </Text>
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
           )}
-          <TouchableOpacity
-            style={{
-              borderWidth: 2,
-              borderColor: theme.colors.slate[300],
-              borderStyle: "dashed",
-              borderRadius: theme.borderRadius.lg,
-              padding: theme.spacing.xl,
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: theme.colors.slate[50],
-            }}
-            onPress={takePhoto}
-          >
-            <Text style={{ fontSize: 48, marginBottom: theme.spacing.sm }}>
-              📷
-            </Text>
-            <Text
+
+          {/* Capture Button */}
+          {capturedImages.length < 3 && (
+            <TouchableOpacity
               style={{
-                fontSize: 16,
-                color: theme.colors.slate[600],
-                fontWeight: "bold",
+                borderWidth: 2,
+                borderColor: theme.colors.slate[300],
+                borderStyle: "dashed",
+                borderRadius: theme.borderRadius.lg,
+                padding: theme.spacing.xl,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: theme.colors.slate[50],
               }}
+              onPress={takePhoto}
             >
-              Take a photo
-            </Text>
-            <Text style={{ fontSize: 12, color: theme.colors.slate[500] }}>
-              {capturedImages.length}/3 images
-            </Text>
-          </TouchableOpacity>
+              <Text style={{ fontSize: 32, marginBottom: theme.spacing.sm }}>
+                📷
+              </Text>
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: theme.colors.slate[600],
+                  fontWeight: "600",
+                }}
+              >
+                Tap to take a photo
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Pro Tips */}
         <View
           style={{
-            margin: theme.spacing.md,
+            marginHorizontal: theme.spacing.md,
+            marginBottom: theme.spacing.xl,
             padding: theme.spacing.md,
             backgroundColor: theme.colors.primary + "10",
             borderRadius: theme.borderRadius.lg,
             borderWidth: 1,
-            borderColor: theme.colors.primary + "20",
+            borderColor: theme.colors.primary + "30",
           }}
         >
           <View
@@ -646,14 +671,14 @@ const ReportIssueScreen: React.FC = () => {
               marginBottom: theme.spacing.sm,
             }}
           >
-            <Text style={{ fontSize: 20, marginRight: theme.spacing.sm }}>
-              ℹ️
+            <Text style={{ fontSize: 18, marginRight: theme.spacing.xs }}>
+              💡
             </Text>
             <Text
               style={{
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: "bold",
-                color: theme.colors.textLight,
+                color: theme.colors.primary,
               }}
             >
               Pro Tips
@@ -662,8 +687,8 @@ const ReportIssueScreen: React.FC = () => {
           <Text
             style={{
               fontSize: 14,
-              color: theme.colors.slate[600],
-              lineHeight: 20,
+              color: theme.colors.slate[700],
+              lineHeight: 22,
             }}
           >
             • Include clear, wide-angle photos of the surroundings.{"\n"}•
@@ -673,13 +698,23 @@ const ReportIssueScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      {/* Submit Button */}
+      {/* Submit Button (Fixed at Bottom) */}
       <View
         style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
           padding: theme.spacing.md,
+          paddingBottom: Platform.OS === "ios" ? 30 : theme.spacing.md, // Accommodate iOS home indicator
           backgroundColor: "white",
           borderTopWidth: 1,
           borderTopColor: theme.colors.slate[200],
+          elevation: 10,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.05,
+          shadowRadius: 5,
         }}
       >
         <TouchableOpacity
@@ -688,26 +723,29 @@ const ReportIssueScreen: React.FC = () => {
               isSubmitting || isUploading
                 ? theme.colors.slate[400]
                 : theme.colors.primary,
-            paddingVertical: theme.spacing.md,
+            paddingVertical: 16,
             borderRadius: theme.borderRadius.lg,
             alignItems: "center",
-            shadowColor: theme.colors.primary,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            elevation: 5,
           }}
           onPress={handleSubmit}
           disabled={isSubmitting || isUploading}
         >
-          {isSubmitting ? (
-            <ActivityIndicator color="white" />
+          {isSubmitting || isUploading ? (
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <ActivityIndicator color="white" style={{ marginRight: 10 }} />
+              <Text
+                style={{ color: "white", fontSize: 16, fontWeight: "bold" }}
+              >
+                {isUploading ? "Uploading Images..." : "Submitting..."}
+              </Text>
+            </View>
           ) : (
             <Text
               style={{
                 color: "white",
                 fontSize: 16,
                 fontWeight: "bold",
+                letterSpacing: 0.5,
               }}
             >
               Submit Report
@@ -717,6 +755,17 @@ const ReportIssueScreen: React.FC = () => {
       </View>
     </SafeAreaView>
   );
+};
+
+// Extracted style for cleaner render logic
+const mapPlaceholderStyle = {
+  height: 200,
+  borderWidth: 1,
+  borderColor: theme.colors.slate[300],
+  borderRadius: theme.borderRadius.lg,
+  backgroundColor: theme.colors.slate[50],
+  alignItems: "center" as const,
+  justifyContent: "center" as const,
 };
 
 export default ReportIssueScreen;
