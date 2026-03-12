@@ -1,6 +1,7 @@
 import { Issue } from "../api/issues";
 
 export interface Stats {
+  successRate?: number; // Added for convenience, but computed in screens
   totalIssues: number;
   pendingIssues: number;
   inProgressIssues: number;
@@ -10,7 +11,7 @@ export interface Stats {
 
 export const HIGH_PRIORITY_CATEGORIES = ["pothole", "water"];
 
-export const computeStats = (issues: Issue[]): Stats => {
+export const calculateStats = (issues: Issue[]): Stats => {
   const totalIssues = issues.length;
   const pendingIssues = issues.filter(
     (issue) => issue.status === "Pending",

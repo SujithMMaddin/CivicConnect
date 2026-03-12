@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,12 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { theme } from "../styles/theme";
 
+import { ActivityIndicator } from "react-native";
+
+import { fetchIssues, type Issue } from "../api/issues";
+import type { Stats } from "../utils/stats";
+import { calculateStats } from "../utils/stats";
+
 type LandingPageNavigationProp = StackNavigationProp<
   RootStackParamList,
   "Landing"
@@ -19,6 +25,29 @@ type LandingPageNavigationProp = StackNavigationProp<
 
 const LandingPage: React.FC = () => {
   const navigation = useNavigation<LandingPageNavigationProp>();
+
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchIssues();
+        setIssues(data);
+        setStats(calculateStats(data));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load data");
+        console.error("LandingPage fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   return (
     <SafeAreaView
@@ -157,32 +186,69 @@ const LandingPage: React.FC = () => {
               justifyContent: "space-around",
             }}
           >
-            {[
-              { number: "120k+", label: "Issues Resolved" },
-              { number: "45+", label: "Cities" },
-              { number: "94%", label: "Success Rate" },
-            ].map((stat, index) => (
-              <View key={index} style={{ alignItems: "center" }}>
-                <Text
-                  style={{
-                    fontSize: 24,
-                    fontWeight: "bold",
-                    color: theme.colors.primary,
-                  }}
-                >
-                  {stat.number}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: theme.colors.slate[600],
-                    textAlign: "center",
-                  }}
-                >
-                  {stat.label}
-                </Text>
-              </View>
-            ))}
+            {loading ? (
+              <ActivityIndicator
+                size="large"
+                color={theme.colors.primary}
+                style={{ alignSelf: "center" }}
+              />
+            ) : error ? (
+              <Text
+                style={{
+                  color: theme.colors.slate[600],
+                  textAlign: "center",
+                  alignSelf: "center",
+                }}
+              >
+                {error}
+              </Text>
+            ) : !stats || stats.totalIssues === 0 ? (
+              <Text
+                style={{
+                  color: theme.colors.slate[600],
+                  textAlign: "center",
+                  alignSelf: "center",
+                }}
+              >
+                No data available
+              </Text>
+            ) : (
+              [
+                {
+                  number: `${stats.totalIssues.toLocaleString()}+`,
+                  label: "Total Reported",
+                },
+                {
+                  number: `${stats.resolvedIssues.toLocaleString()}+`,
+                  label: "Resolved",
+                },
+                {
+                  number: `${Math.round((stats.resolvedIssues / stats.totalIssues) * 100)}%`,
+                  label: "Success Rate",
+                },
+              ].map((stat, index) => (
+                <View key={index} style={{ alignItems: "center" }}>
+                  <Text
+                    style={{
+                      fontSize: 24,
+                      fontWeight: "bold",
+                      color: theme.colors.primary,
+                    }}
+                  >
+                    {stat.number}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: theme.colors.slate[600],
+                      textAlign: "center",
+                    }}
+                  >
+                    {stat.label}
+                  </Text>
+                </View>
+              ))
+            )}
           </View>
         </View>
       </ScrollView>

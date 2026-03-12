@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,12 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { theme } from "../styles/theme";
 
+import { ActivityIndicator } from "react-native";
+
+import { fetchIssues, type Issue } from "../api/issues";
+import type { Stats } from "../utils/stats";
+import { calculateStats } from "../utils/stats";
+
 type AboutScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
   "About"
@@ -20,6 +26,29 @@ type AboutScreenNavigationProp = StackNavigationProp<
 
 const AboutScreen: React.FC = () => {
   const navigation = useNavigation<AboutScreenNavigationProp>();
+
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchIssues();
+        setIssues(data);
+        setStats(calculateStats(data));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load data");
+        console.error("AboutScreen fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   return (
     <SafeAreaView
@@ -338,9 +367,18 @@ const AboutScreen: React.FC = () => {
             }}
           >
             {[
-              { number: "45+", label: "Smart Cities" },
-              { number: "120k", label: "Issues Fixed" },
-              { number: "94%", label: "Resolution Rate" },
+              {
+                number: `${stats?.totalIssues?.toLocaleString() || 0}+`,
+                label: "Total Reported",
+              },
+              {
+                number: `${stats?.resolvedIssues?.toLocaleString() || 0}+`,
+                label: "Resolved",
+              },
+              {
+                number: `${stats ? Math.round((stats.resolvedIssues / stats.totalIssues) * 100 || 0) : 0}%`,
+                label: "Resolution Rate",
+              },
             ].map((stat, index) => (
               <View key={index} style={{ alignItems: "center" }}>
                 <Text
