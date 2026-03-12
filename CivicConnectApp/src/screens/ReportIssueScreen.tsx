@@ -32,12 +32,18 @@ type Coordinate = {
 
 const ReportIssueScreen: React.FC = () => {
   const navigation = useNavigation<ReportIssueScreenNavigationProp>();
+
+  // Cloudinary config
+  const CLOUDINARY_CLOUD_NAME = "drhzct1u1";
+  const CLOUDINARY_UPLOAD_PRESET = "civicconnect_upload";
+
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [latitude, setLatitude] = useState(0);
   const [longitude, setLongitude] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [locationPermission, setLocationPermission] = useState<boolean | null>(
     null,
   );
@@ -115,6 +121,36 @@ const ReportIssueScreen: React.FC = () => {
     }
   };
 
+  const uploadToCloudinary = async (imageUri: string): Promise<string> => {
+    try {
+      const formData = new FormData();
+      formData.append("file", {
+        uri: imageUri,
+        type: "image/jpeg",
+        name: "image.jpg",
+      } as any);
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.secure_url;
+    } catch (error) {
+      console.error("Cloudinary upload error:", error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async () => {
     if (!selectedCategory || !description.trim()) {
       Alert.alert(
@@ -129,9 +165,21 @@ const ReportIssueScreen: React.FC = () => {
       return;
     }
 
+    if (capturedImages.length > 0) {
+      setIsUploading(true);
+    }
+
     setIsSubmitting(true);
 
     try {
+      // Upload images to Cloudinary if any
+      const imageUrls: string[] = [];
+      for (const imageUri of capturedImages) {
+        const secureUrl = await uploadToCloudinary(imageUri);
+        imageUrls.push(secureUrl);
+      }
+
+      // Submit to backend with imageUrls
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/issues`, {
         method: "POST",
         headers: {
@@ -142,6 +190,7 @@ const ReportIssueScreen: React.FC = () => {
           description: description.trim(),
           latitude,
           longitude,
+          imageUrls, // New field
         }),
       });
 
@@ -151,20 +200,26 @@ const ReportIssueScreen: React.FC = () => {
 
       const result = await response.json();
       Alert.alert("Success", "Your report has been submitted successfully!");
+
+      // Reset form including images
       setSelectedCategory(null);
       setDescription("");
       setAddress("");
       setLatitude(0);
       setLongitude(0);
+      setCapturedImages([]);
       navigation.goBack();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Submission error:", error);
       Alert.alert(
         "Error",
-        "Failed to submit report. Please check your connection and try again.",
+        error.message?.includes("Upload")
+          ? `Image upload failed: ${error.message}. Please try again.`
+          : "Failed to submit report. Please check your connection and try again.",
       );
     } finally {
       setIsSubmitting(false);
+      setIsUploading(false);
     }
   };
 
@@ -629,9 +684,10 @@ const ReportIssueScreen: React.FC = () => {
       >
         <TouchableOpacity
           style={{
-            backgroundColor: isSubmitting
-              ? theme.colors.slate[400]
-              : theme.colors.primary,
+            backgroundColor:
+              isSubmitting || isUploading
+                ? theme.colors.slate[400]
+                : theme.colors.primary,
             paddingVertical: theme.spacing.md,
             borderRadius: theme.borderRadius.lg,
             alignItems: "center",
@@ -642,7 +698,7 @@ const ReportIssueScreen: React.FC = () => {
             elevation: 5,
           }}
           onPress={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isUploading}
         >
           {isSubmitting ? (
             <ActivityIndicator color="white" />

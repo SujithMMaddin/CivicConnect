@@ -1,31 +1,31 @@
-# TODO - Category Filter Fix - COMPLETED
+# Cloudinary Image Upload Implementation Plan - ReportIssueScreen
 
-## Issues Fixed:
+## Steps to Complete:
 
-1. ✅ **Category filter not working**: Filter now uses IDs that match ReportIssueScreen categories (pothole, streetlight, water, sanitation)
-2. ✅ **Filter now has full functionality**: Added state management and filtering logic
-3. ✅ **Added "Street Light" to category filter**: Changed from "Power" to "Street Light" with proper ID mapping
+### 1. [PENDING] Create TODO.md (Current step - done)
 
-## Changes Made in `src/screens/AdminDashboardScreen.tsx`:
+### 2. [PENDING] Edit ReportIssueScreen.tsx
 
-- Added useState import for filter state management
-- Added filterCategories array with proper IDs: all, pothole, streetlight, water, sanitation
-- Added category field to each issue for proper filtering
-- Added filteredIssues that filters issues based on selected category
-- Updated filter UI to use filterCategories with onPress handlers
-- Updated issue list to use filteredIssues
-- Added Reset button functionality to clear filters
+- Add Cloudinary constants (CLOUD_NAME: 'drhzct1u1', UPLOAD_PRESET: 'civicconnect_upload')
+- Add isUploading state
+- Add uploadToCloudinary function (FormData/fetch)
+- Update handleSubmit: sequential upload → collect imageUrls → backend POST
+- Update UI: combined loading state for submit button
 
-## Category Mapping:
+### 3. [PENDING] Test implementation
 
-- "Roads" → pothole
-- "Street Light" → streetlight
-- "Water" → water
-- "Sanitation" → sanitation
+- Run `npx expo start`
+- Capture 1-3 images
+- Submit → verify uploads to Cloudinary, backend receives imageUrls
 
-This matches the categories in ReportIssueScreen.tsx:
+### 4. [PENDING] Handle edge cases
 
-- pothole (Pothole)
-- streetlight (Street Light)
-- sanitation (Sanitation)
-- water (Water Leak)
+- Upload errors
+- No images (empty array)
+- Network failures
+
+### 5. [DONE] Attempt completion
+
+Progress: 1/5 steps complete.
+
+**Instructions**: After each step completion, I will update this file. Confirm step 2?\*\*
