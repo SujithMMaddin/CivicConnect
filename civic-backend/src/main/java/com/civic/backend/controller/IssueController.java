@@ -23,6 +23,7 @@ public class IssueController {
         Issue createdIssue = issueService.createIssue(issue);
         return new ResponseEntity<>(createdIssue, HttpStatus.CREATED);
     }
+    
 
     @GetMapping
     public ResponseEntity<List<Issue>> getAllIssues() {

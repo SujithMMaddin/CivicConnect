@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+    --primary: 210 65% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 15% 94%;
+    --secondary-foreground: 215 25% 25%;
+    --muted: 210 15% 96%;
+    --muted-foreground: 215 15% 50%;
+    --accent: 152 45% 42%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 15% 90%;
+    --input: 210 15% 90%;
+    --ring: 210 65% 45%;
+    --radius: 0.5rem;
+    
+    /* Civic-specific colors */
+    --success: 152 45% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 200 80% 50%;
+    --info-foreground: 0 0% 100%;
+    
+    /* Priority colors */
+    --priority-low: 152 45% 42%;
+    --priority-medium: 38 92% 50%;
+    --priority-high: 0 65% 55%;
+    
+    /* Status colors */
+    --status-pending: 38 92% 50%;
+    --status-progress: 200 80% 50%;
+    --status-resolved: 152 45% 42%;
+    
+    /* Chart colors */
+    --chart-1: 210 65% 45%;
+    --chart-2: 152 45% 42%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 200 80% 50%;
+    --chart-5: 0 65% 55%;
+  }
+
+  .dark {
+    --background: 215 30% 10%;
+    --foreground: 210 15% 95%;
+    --card: 215 25% 14%;
+    --card-foreground: 210 15% 95%;
+    --popover: 215 25% 14%;
+    --popover-foreground: 210 15% 95%;
+    --primary: 210 60% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 20% 20%;
+    --secondary-foreground: 210 15% 90%;
+    --muted: 215 20% 18%;
+    --muted-foreground: 215 15% 60%;
+    --accent: 152 40% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 20% 22%;
+    --input: 215 20% 22%;
+    --ring: 210 60% 55%;
+    
+    --success: 152 40% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 85% 55%;
+    --warning-foreground: 0 0% 100%;
+    --info: 200 75% 55%;
+    --info-foreground: 0 0% 100%;
+    
+    --priority-low: 152 40% 45%;
+    --priority-medium: 38 85% 55%;
+    --priority-high: 0 60% 50%;
+    
+    --status-pending: 38 85% 55%;
+    --status-progress: 200 75% 55%;
+    --status-resolved: 152 40% 45%;
+    
+    --chart-1: 210 60% 55%;
+    --chart-2: 152 40% 45%;
+    --chart-3: 38 85% 55%;
+    --chart-4: 200 75% 55%;
+    --chart-5: 0 60% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Inter Variable", "Inter", system-ui, sans-serif;
+  }
+
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

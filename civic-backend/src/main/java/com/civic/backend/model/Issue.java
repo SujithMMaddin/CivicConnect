@@ -1,52 +1,51 @@
 package com.civic.backend.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Entity
+@Table(name = "issues")
 public class Issue {
-    private String issueId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
     private String category;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
+
+    @Column(nullable = false)
     private double latitude;
+
+    @Column(nullable = false)
     private double longitude;
+
+    @Column(nullable = false)
     private String status;
+
+    @Column(nullable = false)
     private String priority;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    private Integer reportCount;
+
+    @ElementCollection
     private List<String> imageUrls;
 
     public Issue() {
     }
 
-    public Issue(String issueId, String category, String description, double latitude, double longitude, String status, String priority, LocalDateTime createdAt) {
-        this.issueId = issueId;
-        this.category = category;
-        this.description = description;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.status = status;
-        this.priority = priority;
-        this.createdAt = createdAt;
+    public Long getId() {
+        return id;
     }
 
-    public Issue(String issueId, String category, String description, double latitude, double longitude, String status, String priority, LocalDateTime createdAt, List<String> imageUrls) {
-        this.issueId = issueId;
-        this.category = category;
-        this.description = description;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.status = status;
-        this.priority = priority;
-        this.createdAt = createdAt;
-        this.imageUrls = imageUrls;
-    }
-
-    // Getters and Setters
-    public String getIssueId() {
-        return issueId;
-    }
-
-    public void setIssueId(String issueId) {
-        this.issueId = issueId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getCategory() {
@@ -103,6 +102,14 @@ public class Issue {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Integer getReportCount() {
+        return reportCount;
+    }
+
+    public void setReportCount(Integer reportCount) {
+        this.reportCount = reportCount;
     }
 
     public List<String> getImageUrls() {
