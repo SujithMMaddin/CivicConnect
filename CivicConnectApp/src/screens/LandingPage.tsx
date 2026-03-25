@@ -345,10 +345,7 @@ export default function CivicReportHome() {
         {/* Recent Issues */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>RECENT ISSUES</Text>
-          <TouchableOpacity
-            style={styles.viewAllBtn}
-            onPress={() => navigation.navigate("Issues")}
-          >
+          <TouchableOpacity style={styles.viewAllBtn}>
             <Text style={styles.viewAllText}>View All</Text>
             <ChevronRight color="#2563EB" size={16} />
           </TouchableOpacity>
