@@ -67,7 +67,7 @@ export default function AdminDashboard() {
     return issues.filter((issue) => {
       const matchesSearch =
         searchQuery === "" ||
-        issue.issueId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        issue.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         issue.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
         issue.description.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -86,15 +86,21 @@ export default function AdminDashboard() {
   }, [issues, searchQuery, statusFilter, priorityFilter, categoryFilter]);
 
   const handleStatusUpdate = async (
-    issueId: string,
+    id: string,
     newStatus: Issue["status"],
   ) => {
+    if (!id || id === "undefined" || isNaN(Number(id))) {
+      console.error("Invalid issue ID:", id);
+      setError("Invalid issue ID. Please refresh and try again.");
+      return;
+    }
+
     try {
-      await updateIssueStatus(issueId, newStatus);
+      await updateIssueStatus(id, newStatus);
       // Update local state
       setIssues((prevIssues) =>
         prevIssues.map((issue) =>
-          issue.issueId === issueId ? { ...issue, status: newStatus } : issue,
+          issue.id === id ? { ...issue, status: newStatus } : issue,
         ),
       );
     } catch (err) {
@@ -278,7 +284,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredIssues.map((issue) => (
             <div
-              key={issue.issueId}
+              key={issue.id}
               className={`bg-white rounded-2xl shadow-sm border transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
                 issue.status === "Resolved" ? "opacity-75 bg-slate-50" : ""
               }`}
@@ -288,7 +294,7 @@ export default function AdminDashboard() {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="font-semibold text-slate-800 text-lg">
-                      {issue.issueId}
+                      {issue.id}
                     </h3>
                     <p className="text-sm text-slate-500">{issue.category}</p>
                   </div>
@@ -351,7 +357,7 @@ export default function AdminDashboard() {
                     value={issue.status}
                     onChange={(e) =>
                       handleStatusUpdate(
-                        issue.issueId,
+                        issue.id,
                         e.target.value as Issue["status"],
                       )
                     }

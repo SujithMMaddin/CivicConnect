@@ -42,6 +42,7 @@ const AppNavigator: React.FC = () => {
           name="AdminDashboard"
           component={require("../screens/AdminDashboardScreen").default}
         />
+
         <Stack.Screen
           name="CivicDataInsights"
           component={require("../screens/CivicDataInsightsScreen").default}

@@ -98,34 +98,24 @@ public IssueService(IssueRepository issueRepository) {
         return issueRepository.findAll();
     }
 
-    public Optional<Issue> getIssueById(String id) {
-        try {
-            Long idLong = Long.parseLong(id);
-            return issueRepository.findById(idLong);
-        } catch (NumberFormatException e) {
-            return Optional.empty();
-        }
-    }
+public Optional<Issue> getIssueById(Long id) {
+    return issueRepository.findById(id);
+}
 
-    public boolean updateIssue(String id, String newStatus, String newPriority) {
-        try {
-            Long idLong = Long.parseLong(id);
-            Optional<Issue> optIssue = issueRepository.findById(idLong);
-            if (optIssue.isEmpty()) {
-                return false;
-            }
-            Issue issue = optIssue.get();
-            if (newStatus != null) {
-                issue.setStatus(newStatus);
-            }
-            if (newPriority != null) {
-                issue.setPriority(newPriority);
-            }
-            issueRepository.save(issue);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
+public boolean updateIssue(Long id, String newStatus, String newPriority) {
+    Optional<Issue> optIssue = issueRepository.findById(id);
+    if (optIssue.isEmpty()) {
+        return false;
     }
+    Issue issue = optIssue.get();
+    if (newStatus != null) {
+        issue.setStatus(newStatus);
+    }
+    if (newPriority != null) {
+        issue.setPriority(newPriority);
+    }
+    issueRepository.save(issue);
+    return true;
+}
 
 }

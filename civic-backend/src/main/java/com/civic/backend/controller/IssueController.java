@@ -31,19 +31,19 @@ public class IssueController {
         return new ResponseEntity<>(issues, HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Issue> getIssueById(@PathVariable String id) {
-        Optional<Issue> issue = issueService.getIssueById(id);
-        if (issue.isPresent()) {
-            return new ResponseEntity<>(issue.get(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+@GetMapping("/{id}")
+public ResponseEntity<Issue> getIssueById(@PathVariable Long id) {
+    Optional<Issue> issue = issueService.getIssueById(id);
+    if (issue.isPresent()) {
+        return new ResponseEntity<>(issue.get(), HttpStatus.OK);
+    } else {
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+}
 
-    @PutMapping("/{id}")
+@PutMapping("/{id}")
 public ResponseEntity<?> updateIssue(
-        @PathVariable String id,
+        @PathVariable Long id,
         @RequestBody Map<String, String> updateRequest) {
 
     String status = updateRequest.get("status");

@@ -1,8 +1,9 @@
-﻿import React, { useState, useEffect } from "react";
+﻿﻿import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   ScrollView,
+  RefreshControl,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
@@ -28,8 +29,12 @@ import {
   Home,
   Flag,
   User,
+  EllipseIcon,
+  LightbulbOff,
 } from "lucide-react-native";
-import { fetchIssues, Issue } from "../api/issues";
+import { useNavigation } from "@react-navigation/native";
+import { fetchIssues, type Issue } from "../api/issues";
+import { Ellipse } from "react-native-svg";
 
 // ---------- Icon Components (SVG-like via Unicode / custom shapes) ----------
 
@@ -211,6 +216,10 @@ const IssueCard = ({
 const getIssueIcon = (category: string): React.ReactNode => {
   const cat = category.toLowerCase();
   if (cat.includes("garbag") || cat.includes("waste")) return <TrashIcon />;
+  if (cat.includes("pothole") || cat.includes("Pothole"))
+    return <EllipseIcon />;
+  if (cat.includes("streetlight") || cat.includes("Lighting"))
+    return <LightbulbOff />;
   if (cat.includes("sewage") || cat.includes("drain")) return <WrenchIcon />;
   if (cat.includes("water") || cat.includes("leak") || cat.includes("droplet"))
     return <DropletIcon />;
@@ -231,10 +240,12 @@ const getPriorityColor = (priority: string): string => {
 };
 
 export default function CivicReportHome() {
+  const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState("home");
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const loadIssues = async () => {
@@ -253,6 +264,18 @@ export default function CivicReportHome() {
     loadIssues();
   }, []);
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const data = await fetchIssues(); // already exists in your file
+      setIssues(data);
+    } catch (err) {
+      console.error("Refresh failed:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const totalIssues = issues.length;
   const highPriority = issues.filter(
     (i: Issue) => i.priority === "High",
@@ -264,7 +287,13 @@ export default function CivicReportHome() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#EFF4FB" />
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View style={styles.header}>
           <View>
@@ -316,9 +345,12 @@ export default function CivicReportHome() {
         {/* Recent Issues */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>RECENT ISSUES</Text>
-          <TouchableOpacity style={styles.viewAllBtn}>
-            <Text style={styles.viewAllText}>View All </Text>
-            <ArrowRight color="#2563EB" />
+          <TouchableOpacity
+            style={styles.viewAllBtn}
+            onPress={() => navigation.navigate("Issues")}
+          >
+            <Text style={styles.viewAllText}>View All</Text>
+            <ChevronRight color="#2563EB" size={16} />
           </TouchableOpacity>
         </View>
 
