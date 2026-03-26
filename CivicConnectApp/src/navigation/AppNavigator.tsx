@@ -1,3 +1,4 @@
+import IssuesScreen from "../screens/IssuesScreen";
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -9,6 +10,7 @@ export type RootStackParamList = {
   ContactSupport: undefined;
   AdminDashboard: undefined;
   CivicDataInsights: undefined;
+  Issues: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -26,6 +28,7 @@ const AppNavigator: React.FC = () => {
           name="Landing"
           component={require("../screens/LandingPage").default}
         />
+        <Stack.Screen name="Issues" component={require("../screens/IssuesScreen").default} />
         <Stack.Screen
           name="About"
           component={require("../screens/AboutScreen").default}

@@ -33,8 +33,10 @@ import {
   LightbulbOff,
 } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import { fetchIssues, type Issue } from "../api/issues";
 import { Ellipse } from "react-native-svg";
+import { RootStackParamList } from "../navigation/AppNavigator";
 
 // ---------- Icon Components (SVG-like via Unicode / custom shapes) ----------
 
@@ -100,6 +102,12 @@ const DropletIcon = () => (
 const InfoIcon = () => (
   <View style={[styles.issueIconBox, { backgroundColor: "#EFF6FF" }]}>
     <Info size={18} color="#1D4ED8" />
+  </View>
+);
+
+const LightbulbOffIcon = () => (
+  <View style={[styles.issueIconBox, { backgroundColor: "#EFF6FF" }]}>
+    <LightbulbOff size={18} color="#1D4ED8" />
   </View>
 );
 
@@ -216,10 +224,18 @@ const IssueCard = ({
 const getIssueIcon = (category: string): React.ReactNode => {
   const cat = category.toLowerCase();
   if (cat.includes("garbag") || cat.includes("waste")) return <TrashIcon />;
-  if (cat.includes("pothole") || cat.includes("Pothole"))
-    return <EllipseIcon />;
-  if (cat.includes("streetlight") || cat.includes("Lighting"))
-    return <LightbulbOff />;
+  if (cat.includes("pothole"))
+    return (
+      <View style={[styles.issueIconBox, { backgroundColor: "#F1F5F9" }]}>
+        <MapPin size={18} color="#475569" />
+      </View>
+    );
+  if (cat.includes("streetlight") || cat.includes("lighting"))
+    return (
+      <View style={[styles.issueIconBox, { backgroundColor: "#F1F5F9" }]}>
+        <Info size={18} color="#475569" />
+      </View>
+    );
   if (cat.includes("sewage") || cat.includes("drain")) return <WrenchIcon />;
   if (cat.includes("water") || cat.includes("leak") || cat.includes("droplet"))
     return <DropletIcon />;
@@ -239,8 +255,10 @@ const getPriorityColor = (priority: string): string => {
   }
 };
 
+type NavigationProp = StackNavigationProp<RootStackParamList>;
+
 export default function CivicReportHome() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const [activeTab, setActiveTab] = useState("home");
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
@@ -251,7 +269,7 @@ export default function CivicReportHome() {
     const loadIssues = async () => {
       setLoading(true);
       setError(null);
-      try {
+      /* try {
         const data = await fetchIssues();
         setIssues(data);
       } catch (err: any) {
@@ -259,6 +277,17 @@ export default function CivicReportHome() {
         setError("Failed to load issues. Please check your connection.");
       } finally {
         setLoading(false);
+      } */
+
+      try {
+        const data = await fetchIssues();
+        console.log("✅ Issues loaded:", data.length);
+        setIssues(data);
+      } catch (err: any) {
+        console.error("❌ Full error:", JSON.stringify(err));
+        console.error("❌ Error message:", err?.message);
+        console.error("❌ Error stack:", err?.stack);
+        setError("Failed to load issues. Please check your connection.");
       }
     };
     loadIssues();
@@ -345,7 +374,10 @@ export default function CivicReportHome() {
         {/* Recent Issues */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>RECENT ISSUES</Text>
-          <TouchableOpacity style={styles.viewAllBtn}>
+          <TouchableOpacity
+            style={styles.viewAllBtn}
+            onPress={() => navigation.navigate("Issues")}
+          >
             <Text style={styles.viewAllText}>View All</Text>
             <ChevronRight color="#2563EB" size={16} />
           </TouchableOpacity>
