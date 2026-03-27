@@ -105,19 +105,30 @@ d:/SUJITH/UNIVERSITY_PROJECT/
 
 ### Open Tabs (VSCode Focus)
 
-- CivicConnectApp: App.tsx, screens (Home/Issues/Profile/Report), api/issues.ts, components (IssueCard/StatCard)
-- CivicReport: pages (Home/Issues/IssueDetail/Profile/Report), components (IssueCard/StatCard/layout)
+- CivicConnectApp: screens (AdminDashboardScreen, HomeScreen, IssuesScreen, ProfileScreen, ReportIssueScreen, CivicDataInsightsScreen, IssueDetailScreen, LandingPage), components (StatCard, IssueCard), api (issues.ts, config.ts), types.ts, theme.ts, package.json, App.tsx
+- CivicReport: pages (Home.tsx, Issues.tsx, IssueDetail.tsx, Profile.tsx, Report.tsx), components (StatCard.tsx, MobileLayout.tsx)
+- Backend: civic-backend controllers/services/model (IssueController.java, IssueService.java, Issue.java)
+- Others: My new app AdminDashboard.tsx, PROJECT_CONTEXT.md, TODO.md
 
 ### TODO Status
 
-- **CivicConnectApp/TODO.md** ✅ _AdminDashboardScreen filter fixed_ (category filter, empty states).
 - **civic-backend/TODO.md** ⏳ _Issue Creation Fix_:
   1. ✅ Null checks in IssueService.createIssue()
-  2. ⏳ Rebuild/restart backend
-  3. ⏳ Test submission
-  4. ⏳ Verify DB
+  2. ⏳ Rebuild/restart backend (`cd civic-backend && mvn clean spring-boot:run`)
+  3. ⏳ Test submission via frontend/Postman
+  4. ⏳ Verify DB (priority='Medium', status='Pending')
+- **admin-web/TODO.md** ✅ Pinterest-inspired UI redesign complete (CSS palette, cards, filters, table, responsiveness preserved)
+- **My new app/TODO.md** ✅ Project cleanup complete (package.json → "civic-admin-dashboard", README, index.html Mocha removal)
+- **Root TODO.md** ⏳ Frontend undefined ID fix in progress (AdminDashboard.tsx: issue.issueId → issue.id; pending API/navigation guards)
+- **CivicReport/docs/todo.md** ⏳ Pending: Leaflet map, animations, real image upload
 
-**Recent Work**: Frontend filtering, backend null-safety fixes. Ready for integration testing.
+**Recent Work**:
+
+- Backend: null-safety in IssueService.createIssue()
+- admin-web: Full Pinterest UI redesign (neutral palette, shadows, rounded elements)
+- My new app: Cleanup (renamed civic-admin-dashboard, removed Mocha), fixed issue.id in AdminDashboard
+- Frontend: Ongoing ID error fixes (navigation/API guards pending)
+  Ready for backend rebuild/integration testing.
 
 ## 🚀 Quick Start / Run Commands
 
@@ -132,5 +143,5 @@ d:/SUJITH/UNIVERSITY_PROJECT/
 - Mobile types: CivicConnectApp/src/types.ts
 - Web types: CivicReport/src/shared/types.ts
 
-**Last Updated**: $(date)
+**Last Updated**: October 2024
 _Share this file with other AIs for instant project context._

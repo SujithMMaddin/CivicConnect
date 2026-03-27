@@ -335,7 +335,11 @@ export default function CivicReportHome() {
         </View>
 
         {/* Report CTA Banner */}
-        <TouchableOpacity style={styles.reportBanner} activeOpacity={0.9}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("ReportIssue")}
+          style={styles.reportBanner}
+          activeOpacity={0.9}
+        >
           <PlusIcon />
           <View style={styles.reportBannerText}>
             <Text style={styles.reportBannerTitle}>Report an Issue</Text>
@@ -450,21 +454,28 @@ export default function CivicReportHome() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+  style={styles.tabItem}
+  activeOpacity={0.7}
+  onPress={() => {
+    setActiveTab("issues");
+    navigation.navigate("Issues");
+  }}
+>
+  <IssuesTabIcon active={activeTab === "issues"} />
+  <Text
+    style={[
+      styles.tabLabel,
+      activeTab === "issues" && { color: "#1E3A8A", fontWeight: "600" },
+    ]}
+  >
+    Issues
+  </Text>
+</TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("ReportIssue")}
           style={styles.tabItem}
           activeOpacity={0.7}
-          onPress={() => setActiveTab("issues")}
         >
-          <IssuesTabIcon active={activeTab === "issues"} />
-          <Text
-            style={[
-              styles.tabLabel,
-              activeTab === "issues" && { color: "#1E3A8A", fontWeight: "600" },
-            ]}
-          >
-            Issues
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7}>
           <ReportTabIcon />
           <Text
             style={[styles.tabLabel, { color: "#1E3A8A", fontWeight: "600" }]}

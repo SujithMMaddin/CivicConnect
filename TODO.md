@@ -1,14 +1,13 @@
-# Frontend Fix for Undefined ID Error
+# Project Task Tracking - Civic Reporting System
 
-## Progress
+## Current Task: Update PROJECT_CONTEXT.md based on recent changes
 
-1. [x] Audit: Found `issue.issueId` only in My new app/src/react-app/pages/AdminDashboard.tsx
+### Steps (from approved plan):
 
-## Remaining Steps
+- [x] 1. Gather info from TODO files and PROJECT_CONTEXT.md
+- [x] 2. Confirm edit plan with user
+- [x] 3. Create this TODO.md for tracking
+- [x] 4. Edit PROJECT_CONTEXT.md with updates (TODO progress, recent work)
+- [x] 5. Verify update and attempt_completion
 
-1. [x] Edited My new app/src/react-app/pages/AdminDashboard.tsx: Replaced `issue.issueId` → `issue.id`
-2. [ ] CivicConnectApp/src/api/issues.ts: Add getIssueById function with id validation, strengthen update guard to check !id || id === 'undefined' || isNaN(Number(id))
-3. [ ] Add missing navigation guards in IssueCard onClick (check if (issue?.id))
-4. [ ] Disable/remove update functionality in AdminDashboardScreen.tsx
-5. [ ] Test all flows, verify no /issues/undefined calls
-6. [ ] attempt_completion
+**Note**: Progress tracked here. Updates marked on completion.

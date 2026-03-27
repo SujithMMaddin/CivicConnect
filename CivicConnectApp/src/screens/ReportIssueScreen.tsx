@@ -1,771 +1,1145 @@
-import React, { useState, useEffect } from "react";
+import { useRef } from "react";
+
+import { Modal } from "react-native";
+import { ChevronRight, Image as ImageIcon } from "lucide-react-native";
+import MapView, { Marker } from "react-native-maps";
+import React, { useState } from "react";
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
-  ScrollView,
+  StyleSheet,
   SafeAreaView,
   StatusBar,
-  TextInput,
-  Alert,
+  ScrollView,
   ActivityIndicator,
+  Alert,
   Image,
-  Platform,
 } from "react-native";
+import {
+  ArrowLeft,
+  MapPin,
+  Camera,
+  X,
+  Construction,
+  Trash2,
+  Droplets,
+  Zap,
+  Wrench,
+  Lightbulb,
+  HelpCircle,
+  Navigation,
+  Brush,
+  Signpost,
+  Footprints,
+  Volume2,
+  Car,
+} from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParamList } from "../navigation/AppNavigator";
-import { theme } from "../styles/theme";
-import { API_CONFIG } from "../api/config";
-import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
+import { API_CONFIG } from "../api/config";
 
-type ReportIssueScreenNavigationProp = StackNavigationProp<
-  RootStackParamList,
-  "ReportIssue"
->;
-
-type Coordinate = {
-  latitude: number;
-  longitude: number;
+// ---------- Types ----------
+type Category = {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
 };
 
-const ReportIssueScreen: React.FC = () => {
-  const navigation = useNavigation<ReportIssueScreenNavigationProp>();
+// ---------- Categories ----------
+const CATEGORIES: Category[] = [
+  {
+    id: "Pothole",
+    label: "Pothole",
+    icon: <Construction size={28} color="#334155" />,
+  },
+  {
+    id: "Streetlight",
+    label: "Street Light",
+    icon: <Lightbulb size={28} color="#334155" />,
+  },
+  {
+    id: "Water",
+    label: "Water",
+    icon: <Droplets size={28} color="#334155" />,
+  },
+  {
+    id: "Trash",
+    label: "Trash",
+    icon: <Trash2 size={28} color="#334155" />,
+  },
+  {
+    id: "Graffiti",
+    label: "Graffiti",
+    icon: <Brush size={28} color="#334155" />,
+  },
+  {
+    id: "Traffic Sign",
+    label: "Traffic Sign",
+    icon: <Signpost size={28} color="#334155" />,
+  },
+  {
+    id: "Sidewalk",
+    label: "Sidewalk",
+    icon: <Footprints size={28} color="#334155" />,
+  },
+  {
+    id: "Parking",
+    label: "Parking",
+    icon: <Car size={28} color="#334155" />,
+  },
+  {
+    id: "Noise",
+    label: "Noise",
+    icon: <Volume2 size={28} color="#334155" />,
+  },
+  {
+    id: "Other",
+    label: "Other",
+    icon: <HelpCircle size={28} color="#334155" />,
+  },
+];
 
-  // Cloudinary config
-  const CLOUDINARY_CLOUD_NAME = "drhzct1u1";
-  const CLOUDINARY_UPLOAD_PRESET = "civicconnect_upload";
+// ---------- Step Indicator ----------
+const StepIndicator = ({ currentStep }: { currentStep: number }) => (
+  <View style={styles.stepIndicator}>
+    {[1, 2, 3].map((step) => (
+      <View
+        key={step}
+        style={[
+          styles.stepBar,
+          step <= currentStep ? styles.stepBarActive : styles.stepBarInactive,
+        ]}
+      />
+    ))}
+  </View>
+);
 
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [description, setDescription] = useState("");
-  const [address, setAddress] = useState("");
-  const [latitude, setLatitude] = useState(0);
-  const [longitude, setLongitude] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [locationPermission, setLocationPermission] = useState<boolean | null>(
-    null,
-  );
-  const [currentLocation, setCurrentLocation] = useState<Coordinate | null>(
-    null,
-  );
-  const [selectedLocation, setSelectedLocation] = useState<Coordinate | null>(
-    null,
-  );
-  const [cameraPermission, setCameraPermission] = useState<boolean | null>(
-    null,
-  );
-  const [capturedImages, setCapturedImages] = useState<string[]>([]);
+// ---------- Step 1: Category ----------
+const Step1 = ({
+  selected,
+  onSelect,
+}: {
+  selected: string;
+  onSelect: (id: string) => void;
+}) => (
+  <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
+    <Text style={styles.stepTitle}>What type of issue?</Text>
+    <Text style={styles.stepSubtitle}>
+      Select the category that best describes the problem
+    </Text>
+    <View style={styles.categoryGrid}>
+      {CATEGORIES.map((cat) => (
+        <TouchableOpacity
+          key={cat.id}
+          style={[
+            styles.categoryCard,
+            selected === cat.id && styles.categoryCardSelected,
+          ]}
+          onPress={() => onSelect(cat.id)}
+          activeOpacity={0.75}
+        >
+          <View
+            style={[
+              styles.categoryIconBox,
+              selected === cat.id && styles.categoryIconBoxSelected,
+            ]}
+          >
+            {cat.icon}
+          </View>
+          <Text
+            style={[
+              styles.categoryLabel,
+              selected === cat.id && styles.categoryLabelSelected,
+            ]}
+          >
+            {cat.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+    <View style={{ height: 100 }} />
+  </ScrollView>
+);
 
-  useEffect(() => {
-    (async () => {
-      // Request location permission
-      const { status: locationStatus } =
-        await Location.requestForegroundPermissionsAsync();
-      setLocationPermission(locationStatus === "granted");
-
-      if (locationStatus === "granted") {
-        const location = await Location.getCurrentPositionAsync({});
-        const coords = {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        };
-        setCurrentLocation(coords);
-        setSelectedLocation(coords);
-        setLatitude(coords.latitude);
-        setLongitude(coords.longitude);
-      }
-
-      // Request camera permission
-      const { status: cameraStatus } =
-        await ImagePicker.requestCameraPermissionsAsync();
-      setCameraPermission(cameraStatus === "granted");
-    })();
-  }, []);
-
-  const categories = [
-    { id: "Pothole", label: "Pothole" },
-    { id: "Streetlight", label: "Street Light" },
-    { id: "Water", label: "Water" },
-    { id: "Trash", label: "Trash" },
-    { id: "Graffiti", label: "Graffiti" },
-    { id: "Traffic Sign", label: "Traffic Sign" },
-    { id: "Sidewalk", label: "Sidewalk" },
-    { id: "Parking", label: "Parking" },
-    { id: "Noise", label: "Noise" },
-    { id: "Other", label: "Other" },
-  ];
-
-  const takePhoto = async () => {
-    if (cameraPermission === false) {
-      Alert.alert(
-        "Camera Permission Required",
-        "Please enable camera permission in your device settings to take photos.",
-      );
+// ---------- Step 2: Location ----------
+const Step2 = ({
+  address,
+  setAddress,
+  latitude,
+  setLatitude,
+  longitude,
+  setLongitude,
+  locationLoading,
+  setLocationLoading,
+  suggestions,
+  setSuggestions,
+  fetchSuggestions,
+  
+}: {
+  address: string;
+  setAddress: (v: string) => void;
+  latitude: number | null;
+  setLatitude: (v: number) => void;
+  longitude: number | null;
+  setLongitude: (v: number) => void;
+  locationLoading: boolean;
+  setLocationLoading: (v: boolean) => void;
+  suggestions: any[];
+  setSuggestions: (v: any[]) => void;
+  fetchSuggestions: (q: string) => void;
+  
+}) => {
+  const mapRef = useRef<MapView>(null);
+  const handleUseCurrentLocation = async () => {
+  setLocationLoading(true);
+  try {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Denied", "Location permission is required.");
       return;
     }
+    const loc = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+    });
+    setLatitude(loc.coords.latitude);
+    setLongitude(loc.coords.longitude);
 
-    if (capturedImages.length >= 3) {
-      Alert.alert("Limit Reached", "You can only add up to 3 photos.");
+    // Animate map to current location
+    mapRef.current?.animateToRegion({
+      latitude: loc.coords.latitude,
+      longitude: loc.coords.longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    }, 800);
+
+    const geocode = await Location.reverseGeocodeAsync({
+      latitude: loc.coords.latitude,
+      longitude: loc.coords.longitude,
+    });
+    if (geocode.length > 0) {
+      const g = geocode[0];
+      const addr = [g.street, g.city, g.region].filter(Boolean).join(", ");
+      setAddress(addr);
+    }
+  } catch (err) {
+    Alert.alert("Error", "Could not get your location. Please try again.");
+  } finally {
+    setLocationLoading(false);
+  }
+};
+
+  return (
+    <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
+      <Text style={styles.stepTitle}>Where is the issue?</Text>
+      <Text style={styles.stepSubtitle}>
+        Enter the address or use the map to pinpoint the location
+      </Text>
+
+      {/* Map Placeholder */}
+     <MapView
+  ref={mapRef}
+  style={{ width: "100%", height: 200, borderRadius: 16, marginBottom: 20 }}
+  initialRegion={{
+    latitude: latitude || 12.9716,
+    longitude: longitude || 77.5946,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  }}
+  onPress={(e) => {
+    const { latitude, longitude } = e.nativeEvent.coordinate;
+    setLatitude(latitude);
+    setLongitude(longitude);
+  }}
+>
+  {latitude && longitude && (
+    <Marker coordinate={{ latitude, longitude }} />
+  )}
+</MapView>
+
+      {/* Address Input */}
+      <Text style={styles.fieldLabel}>Address</Text>
+      <View style={styles.inputRow}>
+        <MapPin size={16} color="#94A3B8" style={{ marginRight: 8 }} />
+        <TextInput
+          style={styles.addressInput}
+          placeholder="Enter street address..."
+          placeholderTextColor="#94A3B8"
+          value={address}
+          onChangeText={(text) => {
+  setAddress(text);
+  fetchSuggestions(text);
+}}
+        />
+      </View>
+
+      {suggestions.map((item: any, index: number) => (
+  <TouchableOpacity
+    key={index}
+    style={{
+      padding: 10,
+      borderBottomWidth: 1,
+      borderColor: "#eee",
+      backgroundColor: "#fff",
+    }}
+    onPress={() => {
+  const lat = parseFloat(item.lat);
+  const lon = parseFloat(item.lon);
+  setAddress(item.display_name);
+  setLatitude(lat);
+  setLongitude(lon);
+  setSuggestions([]);
+  // Animate map to new location
+  mapRef.current?.animateToRegion({
+    latitude: lat,
+    longitude: lon,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  }, 800);
+}}
+  >
+    <Text style={{ fontSize: 13 }}>{item.display_name}</Text>
+  </TouchableOpacity>
+))}
+
+      {/* Use Current Location */}
+      <TouchableOpacity
+        style={styles.currentLocationBtn}
+        onPress={handleUseCurrentLocation}
+        activeOpacity={0.8}
+        disabled={locationLoading}
+      >
+        {locationLoading ? (
+          <ActivityIndicator size="small" color="#334155" />
+        ) : (
+          <>
+            <Navigation size={16} color="#334155" style={{ marginRight: 8 }} />
+            <Text style={styles.currentLocationText}>Use Current Location</Text>
+          </>
+        )}
+      </TouchableOpacity>
+
+      <View style={{ height: 100 }} />
+    </ScrollView>
+  );
+};
+
+// ---------- Step 3: Description + Photos ----------
+// ---------- Step 3: Description + Photos ----------
+const Step3 = ({
+  category,
+  address,
+  description,
+  setDescription,
+  photos,
+  setPhotos,
+}: {
+  category: string;
+  address: string;
+  description: string;
+  setDescription: (v: string) => void;
+  photos: string[];
+  setPhotos: (v: string[]) => void;
+}) => {
+  const categoryLabel =
+    CATEGORIES.find((c) => c.id === category)?.label || "Other";
+  const [photoModalVisible, setPhotoModalVisible] = useState(false);
+
+  const handleTakePhoto = async () => {
+    setPhotoModalVisible(false);
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Denied", "Camera access is required.");
       return;
     }
-
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        quality: 0.7,
-        allowsEditing: false,
-        aspect: [4, 3],
-      });
-
-      if (!result.canceled) {
-        setCapturedImages([...capturedImages, result.assets[0].uri]);
-      }
-    } catch (error) {
-      console.error("Photo capture error:", error);
-      Alert.alert("Error", "Failed to capture photo. Please try again.");
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets.length > 0) {
+      setPhotos([...photos, result.assets[0].uri]);
     }
   };
 
-  const uploadToCloudinary = async (imageUri: string): Promise<string> => {
-    try {
-      const formData = new FormData();
-      formData.append("file", {
-        uri: imageUri,
-        type: "image/jpeg",
-        name: "image.jpg",
-      } as any);
-      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.secure_url;
-    } catch (error) {
-      console.error("Cloudinary upload error:", error);
-      throw error;
+  const handleChooseFromGallery = async () => {
+    setPhotoModalVisible(false);
+    const { status } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Denied", "Photo library access is required.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets.length > 0) {
+      setPhotos([...photos, result.assets[0].uri]);
     }
   };
 
-  const handleSubmit = async () => {
-    if (!selectedCategory || !description.trim()) {
-      Alert.alert(
-        "Error",
-        "Please select a category and provide a description.",
-      );
-      return;
-    }
-
-    if (isNaN(latitude) || isNaN(longitude)) {
-      Alert.alert("Error", "Invalid location coordinates.");
-      return;
-    }
-
-    if (capturedImages.length > 0) {
-      setIsUploading(true);
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const imageUrls: string[] = [];
-      for (const imageUri of capturedImages) {
-        const secureUrl = await uploadToCloudinary(imageUri);
-        imageUrls.push(secureUrl);
-      }
-
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/issues`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          category: selectedCategory,
-          description: description.trim(),
-          latitude,
-          longitude,
-          imageUrls,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      Alert.alert("Success", "Your report has been submitted successfully!");
-
-      // Reset form
-      setSelectedCategory(null);
-      setDescription("");
-      setAddress("");
-      setLatitude(0);
-      setLongitude(0);
-      setCapturedImages([]);
-      navigation.goBack();
-    } catch (error: any) {
-      console.error("Submission error:", error);
-      Alert.alert(
-        "Error",
-        error.message?.includes("Upload")
-          ? `Image upload failed: ${error.message}. Please try again.`
-          : "Failed to submit report. Please check your connection and try again.",
-      );
-    } finally {
-      setIsSubmitting(false);
-      setIsUploading(false);
-    }
+  const handleRemovePhoto = (index: number) => {
+    setPhotos(photos.filter((_, i) => i !== index));
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
-      <StatusBar barStyle="dark-content" backgroundColor="white" />
-
-      {/* Top App Bar */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          paddingHorizontal: theme.spacing.md,
-          paddingVertical: theme.spacing.sm,
-          justifyContent: "space-between",
-          backgroundColor: "white",
-          borderBottomWidth: 1,
-          borderBottomColor: theme.colors.slate[200],
-        }}
-      >
-        <TouchableOpacity
-          style={{ padding: theme.spacing.sm }}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={{ fontSize: 22, color: theme.colors.textLight }}>✕</Text>
-        </TouchableOpacity>
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: "bold",
-            color: theme.colors.textLight,
-            flex: 1,
-            textAlign: "center",
-          }}
-        >
-          Report an Issue
-        </Text>
-        <TouchableOpacity style={{ padding: theme.spacing.sm }}>
-          <Text style={{ fontSize: 22, color: theme.colors.textLight }}>
-            ❓
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Progress Bar */}
-      <View style={{ padding: theme.spacing.md, backgroundColor: "white" }}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            marginBottom: theme.spacing.sm,
-          }}
-        >
-          <Text style={{ fontSize: 14, color: theme.colors.slate[600] }}>
-            Step 1 of 4: Details & Location
-          </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              color: theme.colors.primary,
-              fontWeight: "bold",
-            }}
-          >
-            25%
-          </Text>
-        </View>
-        <View
-          style={{
-            height: 6,
-            backgroundColor: theme.colors.slate[200],
-            borderRadius: theme.borderRadius.sm,
-            overflow: "hidden",
-          }}
-        >
-          <View
-            style={{
-              width: "25%",
-              height: "100%",
-              backgroundColor: theme.colors.primary,
-              borderRadius: theme.borderRadius.sm,
-            }}
-          />
-        </View>
-      </View>
-
-      {/* Content Body */}
-      {/* ADDED: contentContainerStyle with bottom padding to prevent overlay issues */}
+    <>
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        style={styles.stepContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Category Selection */}
-        <View style={{ padding: theme.spacing.md }}>
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: "bold",
-              color: theme.colors.textLight,
-              marginBottom: theme.spacing.md,
-            }}
-          >
-            What is the issue?
-          </Text>
+        <Text style={styles.stepTitle}>Describe the issue</Text>
+        <Text style={styles.stepSubtitle}>
+          Provide details to help us understand and address the problem
+        </Text>
 
-          {/* FIX: Replaced flexWrap and minWidth logic with a strict percentage layout */}
-          <View
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              justifyContent: "space-between",
-            }}
-          >
-            {categories.map((category) => {
-              const isSelected = selectedCategory === category.id;
-              return (
-                <TouchableOpacity
-                  key={category.id}
-                  style={{
-                    width: "48%", // Forces exactly 2 columns
-                    marginBottom: theme.spacing.md,
-                    paddingVertical: theme.spacing.md,
-                    borderRadius: theme.borderRadius.lg,
-                    borderWidth: 2,
-                    borderColor: isSelected
-                      ? theme.colors.primary
-                      : theme.colors.slate[200],
-                    backgroundColor: isSelected
-                      ? theme.colors.primary + "10"
-                      : "white",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  onPress={() => setSelectedCategory(category.id)}
-                >
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: isSelected ? "bold" : "600",
-                      color: isSelected
-                        ? theme.colors.primary
-                        : theme.colors.slate[600],
-                    }}
-                  >
-                    {category.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+        {/* Summary Card */}
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryKey}>Category:</Text>
+            <Text style={styles.summaryValue}>{categoryLabel}</Text>
+          </View>
+          <View style={styles.summaryDivider} />
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryKey}>Location:</Text>
+            <Text style={styles.summaryValue} numberOfLines={1}>
+              {address || "Not specified"}
+            </Text>
           </View>
         </View>
 
         {/* Description */}
-        <View
-          style={{
-            paddingHorizontal: theme.spacing.md,
-            paddingBottom: theme.spacing.md,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: "bold",
-              color: theme.colors.textLight,
-              marginBottom: theme.spacing.sm,
-            }}
-          >
-            Tell us more
-          </Text>
+        <Text style={styles.fieldLabel}>Description</Text>
+        <View style={styles.textAreaWrapper}>
           <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: theme.colors.slate[300],
-              borderRadius: theme.borderRadius.lg,
-              padding: theme.spacing.md,
-              fontSize: 16,
-              minHeight: 120,
-              textAlignVertical: "top",
-              backgroundColor: theme.colors.slate[50],
-            }}
+            style={styles.textArea}
             placeholder="Describe the issue in detail..."
-            placeholderTextColor={theme.colors.slate[400]}
+            placeholderTextColor="#94A3B8"
             multiline
+            numberOfLines={6}
             value={description}
             onChangeText={setDescription}
+            textAlignVertical="top"
           />
-        </View>
-
-        {/* Location */}
-        <View
-          style={{
-            paddingHorizontal: theme.spacing.md,
-            paddingBottom: theme.spacing.md,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: "bold",
-              color: theme.colors.textLight,
-              marginBottom: theme.spacing.sm,
-            }}
-          >
-            Location
-          </Text>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              borderWidth: 1,
-              borderColor: theme.colors.slate[300],
-              borderRadius: theme.borderRadius.lg,
-              paddingHorizontal: theme.spacing.md,
-              marginBottom: theme.spacing.md,
-              backgroundColor: theme.colors.slate[50],
-            }}
-          >
-            <Text style={{ fontSize: 18, marginRight: theme.spacing.sm }}>
-              🔍
-            </Text>
-            <TextInput
-              style={{
-                flex: 1,
-                fontSize: 16,
-                paddingVertical: Platform.OS === "ios" ? 14 : 10,
-              }}
-              placeholder="Search for address..."
-              placeholderTextColor={theme.colors.slate[400]}
-              value={address}
-              onChangeText={setAddress}
-            />
-          </View>
-
-          {locationPermission === false ? (
-            <View style={mapPlaceholderStyle}>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: theme.colors.slate[600],
-                  textAlign: "center",
-                  padding: 20,
-                }}
-              >
-                Location permission denied. Please enable location services to
-                use the map.
-              </Text>
-            </View>
-          ) : currentLocation ? (
-            <View
-              style={{
-                height: 200,
-                borderWidth: 1,
-                borderColor: theme.colors.slate[300],
-                borderRadius: theme.borderRadius.lg,
-                overflow: "hidden",
-              }}
-            >
-              <MapView
-                style={{ flex: 1 }}
-                initialRegion={{
-                  latitude: currentLocation.latitude,
-                  longitude: currentLocation.longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                }}
-                onPress={(e: any) => {
-                  const coords = e.nativeEvent.coordinate;
-                  setSelectedLocation(coords);
-                  setLatitude(coords.latitude);
-                  setLongitude(coords.longitude);
-                }}
-              >
-                {selectedLocation && <Marker coordinate={selectedLocation} />}
-              </MapView>
-            </View>
-          ) : (
-            <View style={mapPlaceholderStyle}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: theme.colors.slate[600],
-                  marginTop: theme.spacing.sm,
-                }}
-              >
-                Loading map...
-              </Text>
-            </View>
-          )}
-
-          {selectedLocation && (
-            <Text
-              style={{
-                fontSize: 14,
-                color: theme.colors.slate[500],
-                marginTop: theme.spacing.sm,
-              }}
-            >
-              Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
-            </Text>
-          )}
+          <Text style={styles.charCount}>{description.length} characters</Text>
         </View>
 
         {/* Photos */}
-        <View
-          style={{
-            paddingHorizontal: theme.spacing.md,
-            paddingBottom: theme.spacing.md,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: theme.spacing.sm,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "bold",
-                color: theme.colors.textLight,
-              }}
-            >
-              Add Photos
-            </Text>
-            <Text style={{ fontSize: 14, color: theme.colors.slate[500] }}>
-              {capturedImages.length}/3 images
-            </Text>
-          </View>
-
-          {/* Image Previews */}
-          {capturedImages.length > 0 && (
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                marginBottom: theme.spacing.md,
-              }}
-            >
-              {capturedImages.map((uri, index) => (
-                <View
-                  key={index}
-                  style={{
-                    marginRight: theme.spacing.md,
-                    marginBottom: theme.spacing.md,
-                    position: "relative",
-                  }}
-                >
-                  <Image
-                    source={{ uri }}
-                    style={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: theme.borderRadius.md,
-                      borderWidth: 1,
-                      borderColor: theme.colors.slate[300],
-                    }}
-                  />
-                  <TouchableOpacity
-                    style={{
-                      position: "absolute",
-                      top: -8,
-                      right: -8,
-                      backgroundColor: theme.colors.slate[800],
-                      borderRadius: 12,
-                      width: 24,
-                      height: 24,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderWidth: 2,
-                      borderColor: "white",
-                    }}
-                    onPress={() => {
-                      const newImages = capturedImages.filter(
-                        (_, i) => i !== index,
-                      );
-                      setCapturedImages(newImages);
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "white",
-                        fontSize: 12,
-                        fontWeight: "bold",
-                      }}
-                    >
-                      ✕
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Capture Button */}
-          {capturedImages.length < 3 && (
-            <TouchableOpacity
-              style={{
-                borderWidth: 2,
-                borderColor: theme.colors.slate[300],
-                borderStyle: "dashed",
-                borderRadius: theme.borderRadius.lg,
-                padding: theme.spacing.xl,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: theme.colors.slate[50],
-              }}
-              onPress={takePhoto}
-            >
-              <Text style={{ fontSize: 32, marginBottom: theme.spacing.sm }}>
-                📷
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: theme.colors.slate[600],
-                  fontWeight: "600",
-                }}
+        <Text style={styles.fieldLabel}>Photos (optional)</Text>
+        <View style={styles.photosRow}>
+          {photos.map((uri, index) => (
+            <View key={index} style={styles.photoThumb}>
+              <Image source={{ uri }} style={styles.photoImage} />
+              <TouchableOpacity
+                style={styles.photoRemove}
+                onPress={() => handleRemovePhoto(index)}
               >
-                Tap to take a photo
-              </Text>
+                <X size={12} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          ))}
+          {photos.length < 3 && (
+            <TouchableOpacity
+              style={styles.addPhotoBtn}
+              onPress={() => setPhotoModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Camera size={24} color="#94A3B8" />
+              <Text style={styles.addPhotoText}>Add</Text>
             </TouchableOpacity>
           )}
         </View>
+        <Text style={styles.photoHint}>Max 3 photos. Tap to add.</Text>
 
-        {/* Pro Tips */}
-        <View
-          style={{
-            marginHorizontal: theme.spacing.md,
-            marginBottom: theme.spacing.xl,
-            padding: theme.spacing.md,
-            backgroundColor: theme.colors.primary + "10",
-            borderRadius: theme.borderRadius.lg,
-            borderWidth: 1,
-            borderColor: theme.colors.primary + "30",
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginBottom: theme.spacing.sm,
-            }}
-          >
-            <Text style={{ fontSize: 18, marginRight: theme.spacing.xs }}>
-              💡
-            </Text>
-            <Text
-              style={{
-                fontSize: 15,
-                fontWeight: "bold",
-                color: theme.colors.primary,
-              }}
-            >
-              Pro Tips
-            </Text>
-          </View>
-          <Text
-            style={{
-              fontSize: 14,
-              color: theme.colors.slate[700],
-              lineHeight: 22,
-            }}
-          >
-            • Include clear, wide-angle photos of the surroundings.{"\n"}•
-            Double-check the map pin for accuracy.{"\n"}• Be specific in your
-            description (e.g., "Deep pothole in middle lane").
-          </Text>
-        </View>
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Submit Button (Fixed at Bottom) */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: theme.spacing.md,
-          paddingBottom: Platform.OS === "ios" ? 30 : theme.spacing.md, // Accommodate iOS home indicator
-          backgroundColor: "white",
-          borderTopWidth: 1,
-          borderTopColor: theme.colors.slate[200],
-          elevation: 10,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: -3 },
-          shadowOpacity: 0.05,
-          shadowRadius: 5,
-        }}
+      {/* Photo Picker Bottom Sheet */}
+      <Modal
+        visible={photoModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPhotoModalVisible(false)}
       >
         <TouchableOpacity
-          style={{
-            backgroundColor:
-              isSubmitting || isUploading
-                ? theme.colors.slate[400]
-                : theme.colors.primary,
-            paddingVertical: 16,
-            borderRadius: theme.borderRadius.lg,
-            alignItems: "center",
-          }}
-          onPress={handleSubmit}
-          disabled={isSubmitting || isUploading}
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setPhotoModalVisible(false)}
         >
-          {isSubmitting || isUploading ? (
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <ActivityIndicator color="white" style={{ marginRight: 10 }} />
-              <Text
-                style={{ color: "white", fontSize: 16, fontWeight: "bold" }}
-              >
-                {isUploading ? "Uploading Images..." : "Submitting..."}
-              </Text>
-            </View>
-          ) : (
-            <Text
-              style={{
-                color: "white",
-                fontSize: 16,
-                fontWeight: "bold",
-                letterSpacing: 0.5,
-              }}
-            >
-              Submit Report
+          <View style={styles.bottomSheet}>
+            {/* Handle bar */}
+            <View style={styles.bottomSheetHandle} />
+
+            <Text style={styles.bottomSheetTitle}>Add Photo</Text>
+            <Text style={styles.bottomSheetSubtitle}>
+              Choose how you'd like to add a photo
             </Text>
-          )}
+
+            {/* Take Photo Option */}
+            <TouchableOpacity
+              style={styles.bottomSheetOption}
+              onPress={handleTakePhoto}
+              activeOpacity={0.8}
+            >
+              <View style={styles.bottomSheetIconBox}>
+                <Camera size={22} color="#1D4ED8" />
+              </View>
+              <View style={styles.bottomSheetOptionText}>
+                <Text style={styles.bottomSheetOptionTitle}>Take Photo</Text>
+                <Text style={styles.bottomSheetOptionSubtitle}>
+                  Use your camera to capture the issue
+                </Text>
+              </View>
+              <ChevronRight size={18} color="#CBD5E1" />
+            </TouchableOpacity>
+
+            <View style={styles.bottomSheetDivider} />
+
+            {/* Gallery Option */}
+            <TouchableOpacity
+              style={styles.bottomSheetOption}
+              onPress={handleChooseFromGallery}
+              activeOpacity={0.8}
+            >
+              <View style={styles.bottomSheetIconBox}>
+                <ImageIcon size={22} color="#1D4ED8" />
+              </View>
+              <View style={styles.bottomSheetOptionText}>
+                <Text style={styles.bottomSheetOptionTitle}>
+                  Choose from Gallery
+                </Text>
+                <Text style={styles.bottomSheetOptionSubtitle}>
+                  Pick an existing photo from your device
+                </Text>
+              </View>
+              <ChevronRight size={18} color="#CBD5E1" />
+            </TouchableOpacity>
+
+            {/* Cancel */}
+            <TouchableOpacity
+              style={styles.bottomSheetCancel}
+              onPress={() => setPhotoModalVisible(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.bottomSheetCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
         </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+      </Modal>
+    </>
   );
 };
 
-// Extracted style for cleaner render logic
-const mapPlaceholderStyle = {
-  height: 200,
-  borderWidth: 1,
-  borderColor: theme.colors.slate[300],
-  borderRadius: theme.borderRadius.lg,
-  backgroundColor: theme.colors.slate[50],
-  alignItems: "center" as const,
-  justifyContent: "center" as const,
+// ---------- Main Screen ----------
+export default function ReportIssueScreen() {
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+ const fetchSuggestions = async (query: string) => {
+  if (query.length < 3) {
+    setSuggestions([]);
+    return;
+  }
+  try {
+    const res = await fetch(
+      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=en`
+    );
+    const data = await res.json();
+    const mapped = data.features.map((f: any) => ({
+      display_name: [
+        f.properties.name,
+        f.properties.city,
+        f.properties.state,
+        f.properties.country,
+      ]
+        .filter(Boolean)
+        .join(", "),
+      lat: f.geometry.coordinates[1].toString(),
+      lon: f.geometry.coordinates[0].toString(),
+    }));
+    setSuggestions(mapped);
+  } catch (err) {
+    console.error("Error fetching suggestions:", err);
+    setSuggestions([]);
+  }
 };
+  const [region, setRegion] = useState({
+    latitude: 12.9716,
+    longitude: 77.5946,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  });
 
-export default ReportIssueScreen;
+  const [selectedLocation, setSelectedLocation] = useState({
+    latitude: 12.9716,
+    longitude: 77.5946,
+  });
+  const navigation = useNavigation();
+  const [step, setStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Step 1
+  const [category, setCategory] = useState("");
+
+  // Step 2
+    const mapRef = useRef<MapView>(null);
+
+  const [address, setAddress] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+
+
+  // Step 3
+  const [description, setDescription] = useState("");
+  const [photos, setPhotos] = useState<string[]>([]);
+
+  const handleContinue = () => {
+    if (step === 1) {
+      if (!category) {
+        Alert.alert("Select Category", "Please select a category to continue.");
+        return;
+      }
+      setStep(2);
+    } else if (step === 2) {
+      if (!address && (!latitude || !longitude)) {
+        Alert.alert(
+          "Location Required",
+          "Please enter an address or use your current location.",
+        );
+        return;
+      }
+      setStep(3);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!description.trim()) {
+      Alert.alert("Description Required", "Please describe the issue.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        category,
+        description,
+        latitude: latitude ?? 0,
+        longitude: longitude ?? 0,
+        status: "Pending",
+        priority: category === "water" ? "High" : "Medium",
+      };
+
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/issues`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      Alert.alert(
+        "Issue Reported! ✅",
+        "Your report has been submitted successfully. Thank you for helping improve your community!",
+        [{ text: "OK", onPress: () => navigation.goBack() }],
+      );
+    } catch (err) {
+      Alert.alert(
+        "Submission Failed",
+        "Could not submit your report. Please try again.",
+      );
+      console.error("Submit error:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
+    else navigation.goBack();
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#EFF4FB" />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={handleBack}
+          style={styles.backButton}
+          activeOpacity={0.7}
+        >
+          <ArrowLeft size={22} color="#0F172A" />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Report Issue</Text>
+          <Text style={styles.headerSubtitle}>Step {step} of 3</Text>
+        </View>
+        <View style={{ width: 40 }} />
+      </View>
+
+      {/* Step Indicator */}
+      <StepIndicator currentStep={step} />
+
+      {/* Step Content */}
+      {step === 1 && <Step1 selected={category} onSelect={setCategory} />}
+      {step === 2 && (
+  <Step2
+    address={address}
+    setAddress={setAddress}
+    latitude={latitude}
+    setLatitude={setLatitude}
+    longitude={longitude}
+    setLongitude={setLongitude}
+    locationLoading={locationLoading}
+    setLocationLoading={setLocationLoading}
+    suggestions={suggestions}
+    setSuggestions={setSuggestions}
+    fetchSuggestions={fetchSuggestions}
+  />
+)}
+      {step === 3 && (
+        <Step3
+          category={category}
+          address={address}
+          description={description}
+          setDescription={setDescription}
+          photos={photos}
+          setPhotos={setPhotos}
+        />
+      )}
+
+      {/* Bottom Button */}
+      <View style={styles.bottomBar}>
+        {step < 3 ? (
+          <TouchableOpacity
+            style={styles.continueBtn}
+            onPress={handleContinue}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.continueBtnText}>Continue</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.continueBtn,
+              submitting && styles.continueBtnDisabled,
+            ]}
+            onPress={handleSubmit}
+            activeOpacity={0.85}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.continueBtnText}>Submit Report</Text>
+            )}
+          </TouchableOpacity>
+        )}
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ---------- Styles ----------
+const styles = StyleSheet.create({
+  modalOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0,0,0,0.4)",
+  justifyContent: "flex-end",
+},
+bottomSheet: {
+  backgroundColor: "#FFFFFF",
+  borderTopLeftRadius: 24,
+  borderTopRightRadius: 24,
+  padding: 24,
+  paddingBottom: 36,
+},
+bottomSheetHandle: {
+  width: 40,
+  height: 4,
+  borderRadius: 2,
+  backgroundColor: "#E2E8F0",
+  alignSelf: "center",
+  marginBottom: 20,
+},
+bottomSheetTitle: {
+  fontSize: 18,
+  fontWeight: "700",
+  color: "#0F172A",
+  marginBottom: 4,
+},
+bottomSheetSubtitle: {
+  fontSize: 13,
+  color: "#64748B",
+  marginBottom: 20,
+},
+bottomSheetOption: {
+  flexDirection: "row",
+  alignItems: "center",
+  paddingVertical: 14,
+  gap: 14,
+},
+bottomSheetIconBox: {
+  width: 46,
+  height: 46,
+  borderRadius: 12,
+  backgroundColor: "#EFF6FF",
+  justifyContent: "center",
+  alignItems: "center",
+},
+bottomSheetOptionText: {
+  flex: 1,
+},
+bottomSheetOptionTitle: {
+  fontSize: 15,
+  fontWeight: "600",
+  color: "#0F172A",
+  marginBottom: 2,
+},
+bottomSheetOptionSubtitle: {
+  fontSize: 12,
+  color: "#64748B",
+},
+bottomSheetDivider: {
+  height: 1,
+  backgroundColor: "#F1F5F9",
+},
+bottomSheetCancel: {
+  marginTop: 16,
+  paddingVertical: 14,
+  borderRadius: 12,
+  backgroundColor: "#F1F5F9",
+  alignItems: "center",
+},
+bottomSheetCancelText: {
+  fontSize: 15,
+  fontWeight: "600",
+  color: "#64748B",
+},
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#EFF4FB",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: "#64748B",
+    marginTop: 1,
+  },
+  stepIndicator: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    gap: 6,
+    marginBottom: 20,
+  },
+  stepBar: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+  },
+  stepBarActive: {
+    backgroundColor: "#1D4ED8",
+  },
+  stepBarInactive: {
+    backgroundColor: "#CBD5E1",
+  },
+  stepContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  stepTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 6,
+    letterSpacing: -0.3,
+  },
+  stepSubtitle: {
+    fontSize: 14,
+    color: "#64748B",
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+
+  // Category Grid
+  categoryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  categoryCard: {
+    width: "47%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    borderWidth: 2,
+    borderColor: "transparent",
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  categoryCardSelected: {
+    borderColor: "#1D4ED8",
+    backgroundColor: "#EFF6FF",
+  },
+  categoryIconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  categoryIconBoxSelected: {
+    backgroundColor: "#DBEAFE",
+  },
+  categoryLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#334155",
+    textAlign: "center",
+  },
+  categoryLabelSelected: {
+    color: "#1D4ED8",
+  },
+
+  // Location
+  mapPlaceholder: {
+    backgroundColor: "#E2E8F0",
+    borderRadius: 16,
+    height: 180,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    overflow: "hidden",
+  },
+  mapPlaceholderInner: {
+    alignItems: "center",
+    gap: 10,
+  },
+  mapPinOuter: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#DBEAFE",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  mapPlaceholderText: {
+    fontSize: 14,
+    color: "#64748B",
+    fontWeight: "500",
+  },
+  locationConfirmed: {
+    alignItems: "center",
+    gap: 6,
+  },
+  locationConfirmedText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1D4ED8",
+  },
+  locationCoords: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 8,
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  addressInput: {
+    flex: 1,
+    fontSize: 14,
+    color: "#0F172A",
+  },
+  currentLocationBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  currentLocationText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#334155",
+  },
+
+  // Step 3
+  summaryCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  summaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: "#F1F5F9",
+    marginVertical: 6,
+  },
+  summaryKey: {
+    fontSize: 13,
+    color: "#64748B",
+    width: 80,
+  },
+  summaryValue: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0F172A",
+    flex: 1,
+  },
+  textAreaWrapper: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginBottom: 20,
+    padding: 14,
+  },
+  textArea: {
+    fontSize: 14,
+    color: "#0F172A",
+    minHeight: 120,
+    lineHeight: 20,
+  },
+  charCount: {
+    fontSize: 12,
+    color: "#94A3B8",
+    textAlign: "right",
+    marginTop: 8,
+  },
+  photosRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 8,
+  },
+  photoThumb: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    overflow: "hidden",
+    position: "relative",
+  },
+  photoImage: {
+    width: "100%",
+    height: "100%",
+  },
+  photoRemove: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addPhotoBtn: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#CBD5E1",
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#FFFFFF",
+  },
+  addPhotoText: {
+    fontSize: 12,
+    color: "#94A3B8",
+    fontWeight: "500",
+  },
+  photoHint: {
+    fontSize: 12,
+    color: "#94A3B8",
+    marginBottom: 8,
+  },
+
+  // Bottom Bar
+  bottomBar: {
+    padding: 16,
+    backgroundColor: "#EFF4FB",
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+  },
+  continueBtn: {
+    backgroundColor: "#1D4ED8",
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#1D4ED8",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  continueBtnDisabled: {
+    opacity: 0.7,
+  },
+  continueBtnText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: 0.3,
+  },
+});
