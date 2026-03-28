@@ -8,7 +8,6 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
-  ActivityIndicator,
   FlatList,
 } from "react-native";
 import {
@@ -26,20 +25,13 @@ import {
   MapPin,
   Clock,
   Users,
-  Home,
-  Flag,
-  User,
-  EllipseIcon,
-  LightbulbOff,
 } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { fetchIssues, type Issue } from "../api/issues";
-import { Ellipse } from "react-native-svg";
 import { RootStackParamList } from "../navigation/AppNavigator";
 
-// ---------- Icon Components (SVG-like via Unicode / custom shapes) ----------
-
+// ---------- Icon Components ----------
 const BellIcon = () => (
   <View style={styles.bellIconWrapper}>
     <Bell size={20} color="#000" />
@@ -105,12 +97,6 @@ const InfoIcon = () => (
   </View>
 );
 
-const LightbulbOffIcon = () => (
-  <View style={[styles.issueIconBox, { backgroundColor: "#EFF6FF" }]}>
-    <LightbulbOff size={18} color="#1D4ED8" />
-  </View>
-);
-
 const LocationIcon = () => (
   <MapPin size={12} color="#475569" style={styles.metaIcon as any} />
 );
@@ -121,25 +107,7 @@ const PeopleIcon = () => (
   <Users size={12} color="#475569" style={styles.metaIcon as any} />
 );
 
-// ---------- Bottom Tab Icons ----------
-const HomeTabIcon = ({ active }: { active: boolean }) => (
-  <Home size={24} color={active ? "#1E3A8A" : "#94A3B8"} />
-);
-const IssuesTabIcon = ({ active }: { active: boolean }) => (
-  <Flag size={24} color={active ? "#1E3A8A" : "#94A3B8"} />
-);
-const ReportTabIcon = () => (
-  <View style={styles.reportTabButton}>
-    <Plus size={22} color="#FFFFFF" strokeWidth={2.5} />
-    <View style={styles.reportInnerGlow} />
-  </View>
-);
-const ProfileTabIcon = ({ active }: { active: boolean }) => (
-  <User size={24} color={active ? "#1E3A8A" : "#94A3B8"} />
-);
-
 // ---------- Sub-components ----------
-
 const StatCard = ({
   label,
   value,
@@ -158,7 +126,7 @@ const StatCard = ({
   </View>
 );
 
-const Badge = ({ label, type }: { label: string; type?: string }) => {
+const Badge = ({ label }: { label: string }) => {
   const badgeStyles: { [key: string]: { bg: string; text: string } } = {
     Pending: { bg: "#FEF3C7", text: "#92400E" },
     "In Progress": { bg: "#DBEAFE", text: "#1D4ED8" },
@@ -220,7 +188,6 @@ const IssueCard = ({
 );
 
 // ---------- Main Screen ----------
-
 const getIssueIcon = (category: string): React.ReactNode => {
   const cat = category.toLowerCase();
   if (cat.includes("garbag") || cat.includes("waste")) return <TrashIcon />;
@@ -259,7 +226,6 @@ type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function CivicReportHome() {
   const navigation = useNavigation<NavigationProp>();
-  const [activeTab, setActiveTab] = useState("home");
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -269,7 +235,7 @@ export default function CivicReportHome() {
     const loadIssues = async () => {
       setLoading(true);
       setError(null);
-      /* try {
+      try {
         const data = await fetchIssues();
         setIssues(data);
       } catch (err: any) {
@@ -277,17 +243,6 @@ export default function CivicReportHome() {
         setError("Failed to load issues. Please check your connection.");
       } finally {
         setLoading(false);
-      } */
-
-      try {
-        const data = await fetchIssues();
-        console.log("✅ Issues loaded:", data.length);
-        setIssues(data);
-      } catch (err: any) {
-        console.error("❌ Full error:", JSON.stringify(err));
-        console.error("❌ Error message:", err?.message);
-        console.error("❌ Error stack:", err?.stack);
-        setError("Failed to load issues. Please check your connection.");
       }
     };
     loadIssues();
@@ -296,7 +251,7 @@ export default function CivicReportHome() {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const data = await fetchIssues(); // already exists in your file
+      const data = await fetchIssues();
       setIssues(data);
     } catch (err) {
       console.error("Refresh failed:", err);
@@ -313,6 +268,7 @@ export default function CivicReportHome() {
     (i: Issue) => i.status === "Pending",
   ).length;
   const resolved = issues.filter((i: Issue) => i.status === "Resolved").length;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#EFF4FB" />
@@ -380,7 +336,9 @@ export default function CivicReportHome() {
           <Text style={styles.sectionTitle}>RECENT ISSUES</Text>
           <TouchableOpacity
             style={styles.viewAllBtn}
-            onPress={() => navigation.navigate("Issues")}
+            onPress={() =>
+              navigation.navigate("MainTabs", { screen: "Issues" })
+            }
           >
             <Text style={styles.viewAllText}>View All</Text>
             <ChevronRight color="#2563EB" size={16} />
@@ -433,113 +391,23 @@ export default function CivicReportHome() {
           </View>
         </View>
 
-        <View style={{ height: 90 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
-
-      {/* Bottom Tab Bar */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          activeOpacity={0.7}
-          onPress={() => setActiveTab("home")}
-        >
-          <HomeTabIcon active={activeTab === "home"} />
-          <Text
-            style={[
-              styles.tabLabel,
-              activeTab === "home" && { color: "#1E3A8A", fontWeight: "600" },
-            ]}
-          >
-            Home
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-  style={styles.tabItem}
-  activeOpacity={0.7}
-  onPress={() => {
-    setActiveTab("issues");
-    navigation.navigate("Issues");
-  }}
->
-  <IssuesTabIcon active={activeTab === "issues"} />
-  <Text
-    style={[
-      styles.tabLabel,
-      activeTab === "issues" && { color: "#1E3A8A", fontWeight: "600" },
-    ]}
-  >
-    Issues
-  </Text>
-</TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("ReportIssue")}
-          style={styles.tabItem}
-          activeOpacity={0.7}
-        >
-          <ReportTabIcon />
-          <Text
-            style={[styles.tabLabel, { color: "#1E3A8A", fontWeight: "600" }]}
-          >
-            Report
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          activeOpacity={0.7}
-          onPress={() => setActiveTab("profile")}
-        >
-          <ProfileTabIcon active={activeTab === "profile"} />
-          <Text
-            style={[
-              styles.tabLabel,
-              activeTab === "profile" && {
-                color: "#1E3A8A",
-                fontWeight: "600",
-              },
-            ]}
-          >
-            Profile
-          </Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
 
 // ---------- Styles ----------
-
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#EFF4FB",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#EFF4FB",
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: "#64748B",
-    fontWeight: "500",
-  },
+  safeArea: { flex: 1, backgroundColor: "#EFF4FB" },
   errorContainer: {
     padding: 16,
     backgroundColor: "#FEF2F2",
     borderRadius: 12,
     marginBottom: 16,
   },
-  errorText: {
-    color: "#DC2626",
-    textAlign: "center",
-    fontSize: 14,
-  },
-  scroll: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
+  errorText: { color: "#DC2626", textAlign: "center", fontSize: 14 },
+  scroll: { flex: 1, paddingHorizontal: 16 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -547,11 +415,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 20,
   },
-  welcomeText: {
-    fontSize: 14,
-    color: "#64748B",
-    fontWeight: "400",
-  },
+  welcomeText: { fontSize: 14, color: "#64748B", fontWeight: "400" },
   appName: {
     fontSize: 24,
     fontWeight: "700",
@@ -570,9 +434,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  bellIconWrapper: {
-    position: "relative",
-  },
+  bellIconWrapper: { position: "relative" },
   bellDot: {
     position: "absolute",
     top: -2,
@@ -612,10 +474,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginBottom: 2,
   },
-  reportBannerSubtitle: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.8)",
-  },
+  reportBannerSubtitle: { fontSize: 13, color: "rgba(255,255,255,0.8)" },
   sectionTitle: {
     fontSize: 12,
     fontWeight: "700",
@@ -649,11 +508,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: 6,
   },
-  statValue: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#0F172A",
-  },
+  statValue: { fontSize: 28, fontWeight: "700", color: "#0F172A" },
   statIconBox: {
     width: 40,
     height: 40,
@@ -667,15 +522,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  viewAllBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  viewAllText: {
-    fontSize: 13,
-    color: "#2563EB",
-    fontWeight: "600",
-  },
+  viewAllBtn: { flexDirection: "row", alignItems: "center" },
+  viewAllText: { fontSize: 13, color: "#2563EB", fontWeight: "600" },
   issueCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 14,
@@ -726,32 +574,12 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 6,
   },
-  issueMeta2: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  categoryText: {
-    fontSize: 12,
-    color: "#64748B",
-  },
-  metaIcon: {
-    fontSize: 11,
-  },
-  metaText: {
-    fontSize: 11,
-    color: "#94A3B8",
-    marginRight: 6,
-  },
+  issueMeta2: { flexDirection: "row", alignItems: "center", gap: 4 },
+  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  badgeText: { fontSize: 11, fontWeight: "600" },
+  categoryText: { fontSize: 12, color: "#64748B" },
+  metaIcon: { fontSize: 11 },
+  metaText: { fontSize: 11, color: "#94A3B8", marginRight: 6 },
   helpCard: {
     backgroundColor: "#EFF6FF",
     borderRadius: 14,
@@ -771,64 +599,5 @@ const styles = StyleSheet.create({
     color: "#1E3A8A",
     marginBottom: 4,
   },
-  helpSubtitle: {
-    fontSize: 12,
-    color: "#475569",
-    lineHeight: 17,
-  },
-  tabBar: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-    backgroundColor: "#FFFFFF",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-    borderTopWidth: 1,
-    borderTopColor: "#F1F5F9",
-    paddingBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-  },
-  tabLabel: {
-    fontSize: 11,
-    color: "#94A3B8",
-    fontWeight: "500",
-  },
-  reportTabButton: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: "#2563EB",
-    justifyContent: "center",
-    alignItems: "center",
-
-    shadowColor: "#2563EB",
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 10,
-
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-
-    marginBottom: 6,
-  },
-  reportInnerGlow: {
-    position: "absolute",
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.3)",
-  },
+  helpSubtitle: { fontSize: 12, color: "#475569", lineHeight: 17 },
 });

@@ -96,7 +96,7 @@ export default function LoginScreen() {
         );
         console.log("Browser result:", JSON.stringify(result));
         if (result.type === "success") {
-          navigation.navigate("Landing");
+          navigation.navigate("MainTabs");
         }
       }
     } catch (err) {
@@ -119,7 +119,7 @@ export default function LoginScreen() {
         Alert.alert("Login Failed", error.message);
         return;
       }
-      navigation.navigate("Landing");
+      navigation.navigate("MainTabs");
     } catch (err) {
       Alert.alert("Error", "Something went wrong. Please try again.");
     }

@@ -34,6 +34,9 @@ public class Issue {
 
     private Integer reportCount;
 
+    @Column(nullable = true)
+    private String userId;
+
     @ElementCollection
     private List<String> imageUrls;
 
@@ -110,6 +113,14 @@ public class Issue {
 
     public void setReportCount(Integer reportCount) {
         this.reportCount = reportCount;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public List<String> getImageUrls() {
