@@ -1,4 +1,12 @@
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import { supabase } from "../api/supabase";
+import { Alert } from "react-native";
 import React, { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import * as AuthSession from "expo-auth-session";
 import {
   View,
   Text,
@@ -10,10 +18,12 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+import { Image } from "react-native";
 import { Svg, Path, Ellipse } from "react-native-svg"; // <-- Use SVG for lines
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 // Simple component for background curves and dotted lines
+WebBrowser.maybeCompleteAuthSession();
 const BackgroundGraphics = () => {
   return (
     <View style={StyleSheet.absoluteFill}>
@@ -57,13 +67,67 @@ const BackgroundGraphics = () => {
 };
 
 export default function LoginScreen() {
+  type NavigationProp = StackNavigationProp<RootStackParamList>;
+  const navigation = useNavigation<NavigationProp>();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  const handleGoogleSignIn = async () => {
+    console.log("Google button tapped");
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "civicconnect://auth/callback",
+          skipBrowserRedirect: false,
+        },
+      });
+      console.log("Supabase data:", JSON.stringify(data));
+      console.log("Supabase error:", JSON.stringify(error));
+      if (error) {
+        Alert.alert("Google Sign In Failed", error.message);
+        return;
+      }
+      if (data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          "civicconnect://auth/callback",
+        );
+        console.log("Browser result:", JSON.stringify(result));
+        if (result.type === "success") {
+          navigation.navigate("Landing");
+        }
+      }
+    } catch (err) {
+      console.error("Google Sign In error:", err);
+      Alert.alert("Error", "Google Sign In failed. Please try again.");
+    }
+  };
+
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        Alert.alert("Login Failed", error.message);
+        return;
+      }
+      navigation.navigate("Landing");
+    } catch (err) {
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <BackgroundGraphics /> {/* Overlay the SVG behind the form */}
+      <BackgroundGraphics />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -72,7 +136,10 @@ export default function LoginScreen() {
           {/* Header */}
           <View style={styles.headerContainer}>
             <View style={styles.logoRow}>
-              <Ionicons name="library" size={28} color="#2563EB" />
+              <Image
+                source={require("../../assets/applogo.png")}
+                style={styles.logoIcon}
+              />
               <Text style={styles.logoTitle}>CivicConnect</Text>
             </View>
             <Text style={styles.logoSubtitle}>REPORT & TRACK ISSUES</Text>
@@ -138,7 +205,10 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             {/* Sign In Button */}
-            <TouchableOpacity style={styles.signInButton}>
+            <TouchableOpacity
+              style={styles.signInButton}
+              onPress={handleSignIn}
+            >
               <Text style={styles.signInButtonText}>Sign In</Text>
             </TouchableOpacity>
 
@@ -154,7 +224,10 @@ export default function LoginScreen() {
               <TouchableOpacity style={styles.socialButton}>
                 <Ionicons name="finger-print" size={24} color="#2563EB" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton}>
+              <TouchableOpacity
+                style={styles.socialButton}
+                onPress={handleGoogleSignIn}
+              >
                 {/* Note: In production you might want an official Google SVG icon */}
                 <MaterialCommunityIcons
                   name="google"
@@ -162,15 +235,12 @@ export default function LoginScreen() {
                   color="#4B5563"
                 />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="logo-apple" size={24} color="#000" />
-              </TouchableOpacity>
             </View>
 
             {/* Sign Up Link */}
             <View style={styles.signUpContainer}>
               <Text style={styles.signUpText}>Don't have an account? </Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
                 <Text style={styles.signUpLink}>Sign Up</Text>
               </TouchableOpacity>
             </View>
@@ -194,6 +264,12 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  logoIcon: {
+    width: 28,
+    height: 28,
+    resizeMode: "contain",
+    marginRight: 6,
+  },
   container: {
     flex: 1,
     backgroundColor: "#F4F7FB",

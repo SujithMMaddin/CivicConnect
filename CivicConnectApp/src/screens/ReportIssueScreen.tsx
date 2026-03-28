@@ -1,5 +1,5 @@
 import { useRef } from "react";
-
+import { supabase } from "../api/supabase";
 import { Modal } from "react-native";
 import { ChevronRight, Image as ImageIcon } from "lucide-react-native";
 import MapView, { Marker } from "react-native-maps";
@@ -177,7 +177,6 @@ const Step2 = ({
   suggestions,
   setSuggestions,
   fetchSuggestions,
-  
 }: {
   address: string;
   setAddress: (v: string) => void;
@@ -190,46 +189,48 @@ const Step2 = ({
   suggestions: any[];
   setSuggestions: (v: any[]) => void;
   fetchSuggestions: (q: string) => void;
-  
 }) => {
   const mapRef = useRef<MapView>(null);
   const handleUseCurrentLocation = async () => {
-  setLocationLoading(true);
-  try {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission Denied", "Location permission is required.");
-      return;
-    }
-    const loc = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
-    });
-    setLatitude(loc.coords.latitude);
-    setLongitude(loc.coords.longitude);
+    setLocationLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Location permission is required.");
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      setLatitude(loc.coords.latitude);
+      setLongitude(loc.coords.longitude);
 
-    // Animate map to current location
-    mapRef.current?.animateToRegion({
-      latitude: loc.coords.latitude,
-      longitude: loc.coords.longitude,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    }, 800);
+      // Animate map to current location
+      mapRef.current?.animateToRegion(
+        {
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        800,
+      );
 
-    const geocode = await Location.reverseGeocodeAsync({
-      latitude: loc.coords.latitude,
-      longitude: loc.coords.longitude,
-    });
-    if (geocode.length > 0) {
-      const g = geocode[0];
-      const addr = [g.street, g.city, g.region].filter(Boolean).join(", ");
-      setAddress(addr);
+      const geocode = await Location.reverseGeocodeAsync({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      });
+      if (geocode.length > 0) {
+        const g = geocode[0];
+        const addr = [g.street, g.city, g.region].filter(Boolean).join(", ");
+        setAddress(addr);
+      }
+    } catch (err) {
+      Alert.alert("Error", "Could not get your location. Please try again.");
+    } finally {
+      setLocationLoading(false);
     }
-  } catch (err) {
-    Alert.alert("Error", "Could not get your location. Please try again.");
-  } finally {
-    setLocationLoading(false);
-  }
-};
+  };
 
   return (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
@@ -239,25 +240,30 @@ const Step2 = ({
       </Text>
 
       {/* Map Placeholder */}
-     <MapView
-  ref={mapRef}
-  style={{ width: "100%", height: 200, borderRadius: 16, marginBottom: 20 }}
-  initialRegion={{
-    latitude: latitude || 12.9716,
-    longitude: longitude || 77.5946,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  }}
-  onPress={(e) => {
-    const { latitude, longitude } = e.nativeEvent.coordinate;
-    setLatitude(latitude);
-    setLongitude(longitude);
-  }}
->
-  {latitude && longitude && (
-    <Marker coordinate={{ latitude, longitude }} />
-  )}
-</MapView>
+      <MapView
+        ref={mapRef}
+        style={{
+          width: "100%",
+          height: 200,
+          borderRadius: 16,
+          marginBottom: 20,
+        }}
+        initialRegion={{
+          latitude: latitude || 12.9716,
+          longitude: longitude || 77.5946,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }}
+        onPress={(e) => {
+          const { latitude, longitude } = e.nativeEvent.coordinate;
+          setLatitude(latitude);
+          setLongitude(longitude);
+        }}
+      >
+        {latitude && longitude && (
+          <Marker coordinate={{ latitude, longitude }} />
+        )}
+      </MapView>
 
       {/* Address Input */}
       <Text style={styles.fieldLabel}>Address</Text>
@@ -269,40 +275,43 @@ const Step2 = ({
           placeholderTextColor="#94A3B8"
           value={address}
           onChangeText={(text) => {
-  setAddress(text);
-  fetchSuggestions(text);
-}}
+            setAddress(text);
+            fetchSuggestions(text);
+          }}
         />
       </View>
 
       {suggestions.map((item: any, index: number) => (
-  <TouchableOpacity
-    key={index}
-    style={{
-      padding: 10,
-      borderBottomWidth: 1,
-      borderColor: "#eee",
-      backgroundColor: "#fff",
-    }}
-    onPress={() => {
-  const lat = parseFloat(item.lat);
-  const lon = parseFloat(item.lon);
-  setAddress(item.display_name);
-  setLatitude(lat);
-  setLongitude(lon);
-  setSuggestions([]);
-  // Animate map to new location
-  mapRef.current?.animateToRegion({
-    latitude: lat,
-    longitude: lon,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  }, 800);
-}}
-  >
-    <Text style={{ fontSize: 13 }}>{item.display_name}</Text>
-  </TouchableOpacity>
-))}
+        <TouchableOpacity
+          key={index}
+          style={{
+            padding: 10,
+            borderBottomWidth: 1,
+            borderColor: "#eee",
+            backgroundColor: "#fff",
+          }}
+          onPress={() => {
+            const lat = parseFloat(item.lat);
+            const lon = parseFloat(item.lon);
+            setAddress(item.display_name);
+            setLatitude(lat);
+            setLongitude(lon);
+            setSuggestions([]);
+            // Animate map to new location
+            mapRef.current?.animateToRegion(
+              {
+                latitude: lat,
+                longitude: lon,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              },
+              800,
+            );
+          }}
+        >
+          <Text style={{ fontSize: 13 }}>{item.display_name}</Text>
+        </TouchableOpacity>
+      ))}
 
       {/* Use Current Location */}
       <TouchableOpacity
@@ -365,8 +374,7 @@ const Step3 = ({
 
   const handleChooseFromGallery = async () => {
     setPhotoModalVisible(false);
-    const { status } =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert("Permission Denied", "Photo library access is required.");
       return;
@@ -536,34 +544,34 @@ const Step3 = ({
 // ---------- Main Screen ----------
 export default function ReportIssueScreen() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
- const fetchSuggestions = async (query: string) => {
-  if (query.length < 3) {
-    setSuggestions([]);
-    return;
-  }
-  try {
-    const res = await fetch(
-      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=en`
-    );
-    const data = await res.json();
-    const mapped = data.features.map((f: any) => ({
-      display_name: [
-        f.properties.name,
-        f.properties.city,
-        f.properties.state,
-        f.properties.country,
-      ]
-        .filter(Boolean)
-        .join(", "),
-      lat: f.geometry.coordinates[1].toString(),
-      lon: f.geometry.coordinates[0].toString(),
-    }));
-    setSuggestions(mapped);
-  } catch (err) {
-    console.error("Error fetching suggestions:", err);
-    setSuggestions([]);
-  }
-};
+  const fetchSuggestions = async (query: string) => {
+    if (query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=en`,
+      );
+      const data = await res.json();
+      const mapped = data.features.map((f: any) => ({
+        display_name: [
+          f.properties.name,
+          f.properties.city,
+          f.properties.state,
+          f.properties.country,
+        ]
+          .filter(Boolean)
+          .join(", "),
+        lat: f.geometry.coordinates[1].toString(),
+        lon: f.geometry.coordinates[0].toString(),
+      }));
+      setSuggestions(mapped);
+    } catch (err) {
+      console.error("Error fetching suggestions:", err);
+      setSuggestions([]);
+    }
+  };
   const [region, setRegion] = useState({
     latitude: 12.9716,
     longitude: 77.5946,
@@ -583,13 +591,12 @@ export default function ReportIssueScreen() {
   const [category, setCategory] = useState("");
 
   // Step 2
-    const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<MapView>(null);
 
   const [address, setAddress] = useState("");
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
-
 
   // Step 3
   const [description, setDescription] = useState("");
@@ -622,13 +629,19 @@ export default function ReportIssueScreen() {
 
     setSubmitting(true);
     try {
+      // Get current logged in user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       const payload = {
         category,
         description,
         latitude: latitude ?? 0,
         longitude: longitude ?? 0,
         status: "Pending",
-        priority: category === "water" ? "High" : "Medium",
+        priority: category === "Water" ? "High" : "Medium",
+        userId: user?.id ?? null,
       };
 
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/issues`, {
@@ -640,7 +653,7 @@ export default function ReportIssueScreen() {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       Alert.alert(
-        "Issue Reported! ✅",
+        "Issue Reported",
         "Your report has been submitted successfully. Thank you for helping improve your community!",
         [{ text: "OK", onPress: () => navigation.goBack() }],
       );
@@ -654,7 +667,6 @@ export default function ReportIssueScreen() {
       setSubmitting(false);
     }
   };
-
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
     else navigation.goBack();
@@ -686,20 +698,20 @@ export default function ReportIssueScreen() {
       {/* Step Content */}
       {step === 1 && <Step1 selected={category} onSelect={setCategory} />}
       {step === 2 && (
-  <Step2
-    address={address}
-    setAddress={setAddress}
-    latitude={latitude}
-    setLatitude={setLatitude}
-    longitude={longitude}
-    setLongitude={setLongitude}
-    locationLoading={locationLoading}
-    setLocationLoading={setLocationLoading}
-    suggestions={suggestions}
-    setSuggestions={setSuggestions}
-    fetchSuggestions={fetchSuggestions}
-  />
-)}
+        <Step2
+          address={address}
+          setAddress={setAddress}
+          latitude={latitude}
+          setLatitude={setLatitude}
+          longitude={longitude}
+          setLongitude={setLongitude}
+          locationLoading={locationLoading}
+          setLocationLoading={setLocationLoading}
+          suggestions={suggestions}
+          setSuggestions={setSuggestions}
+          fetchSuggestions={fetchSuggestions}
+        />
+      )}
       {step === 3 && (
         <Step3
           category={category}
@@ -746,79 +758,79 @@ export default function ReportIssueScreen() {
 // ---------- Styles ----------
 const styles = StyleSheet.create({
   modalOverlay: {
-  flex: 1,
-  backgroundColor: "rgba(0,0,0,0.4)",
-  justifyContent: "flex-end",
-},
-bottomSheet: {
-  backgroundColor: "#FFFFFF",
-  borderTopLeftRadius: 24,
-  borderTopRightRadius: 24,
-  padding: 24,
-  paddingBottom: 36,
-},
-bottomSheetHandle: {
-  width: 40,
-  height: 4,
-  borderRadius: 2,
-  backgroundColor: "#E2E8F0",
-  alignSelf: "center",
-  marginBottom: 20,
-},
-bottomSheetTitle: {
-  fontSize: 18,
-  fontWeight: "700",
-  color: "#0F172A",
-  marginBottom: 4,
-},
-bottomSheetSubtitle: {
-  fontSize: 13,
-  color: "#64748B",
-  marginBottom: 20,
-},
-bottomSheetOption: {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingVertical: 14,
-  gap: 14,
-},
-bottomSheetIconBox: {
-  width: 46,
-  height: 46,
-  borderRadius: 12,
-  backgroundColor: "#EFF6FF",
-  justifyContent: "center",
-  alignItems: "center",
-},
-bottomSheetOptionText: {
-  flex: 1,
-},
-bottomSheetOptionTitle: {
-  fontSize: 15,
-  fontWeight: "600",
-  color: "#0F172A",
-  marginBottom: 2,
-},
-bottomSheetOptionSubtitle: {
-  fontSize: 12,
-  color: "#64748B",
-},
-bottomSheetDivider: {
-  height: 1,
-  backgroundColor: "#F1F5F9",
-},
-bottomSheetCancel: {
-  marginTop: 16,
-  paddingVertical: 14,
-  borderRadius: 12,
-  backgroundColor: "#F1F5F9",
-  alignItems: "center",
-},
-bottomSheetCancelText: {
-  fontSize: 15,
-  fontWeight: "600",
-  color: "#64748B",
-},
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
+  },
+  bottomSheet: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 36,
+  },
+  bottomSheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#E2E8F0",
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  bottomSheetTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 4,
+  },
+  bottomSheetSubtitle: {
+    fontSize: 13,
+    color: "#64748B",
+    marginBottom: 20,
+  },
+  bottomSheetOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    gap: 14,
+  },
+  bottomSheetIconBox: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: "#EFF6FF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  bottomSheetOptionText: {
+    flex: 1,
+  },
+  bottomSheetOptionTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#0F172A",
+    marginBottom: 2,
+  },
+  bottomSheetOptionSubtitle: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+  bottomSheetDivider: {
+    height: 1,
+    backgroundColor: "#F1F5F9",
+  },
+  bottomSheetCancel: {
+    marginTop: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: "#F1F5F9",
+    alignItems: "center",
+  },
+  bottomSheetCancelText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#64748B",
+  },
   safeArea: {
     flex: 1,
     backgroundColor: "#EFF4FB",

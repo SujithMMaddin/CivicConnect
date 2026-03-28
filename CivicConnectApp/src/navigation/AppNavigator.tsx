@@ -11,6 +11,9 @@ export type RootStackParamList = {
   AdminDashboard: undefined;
   CivicDataInsights: undefined;
   Issues: undefined;
+  Login: undefined;
+  Signup: undefined;
+  Splash: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -19,16 +22,32 @@ const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Landing"
+        initialRouteName="Splash"
         screenOptions={{
           headerShown: false,
         }}
       >
         <Stack.Screen
+          name="Splash"
+          component={require("../screens/SplashScreen").default}
+        />
+        <Stack.Screen
+          name="Login"
+          component={require("../screens/LoginPage").default}
+        />
+
+        <Stack.Screen
+          name="Signup"
+          component={require("../screens/SignupPage").default}
+        />
+        <Stack.Screen
           name="Landing"
           component={require("../screens/LandingPage").default}
         />
-        <Stack.Screen name="Issues" component={require("../screens/IssuesScreen").default} />
+        <Stack.Screen
+          name="Issues"
+          component={require("../screens/IssuesScreen").default}
+        />
         <Stack.Screen
           name="About"
           component={require("../screens/AboutScreen").default}
