@@ -40,7 +40,7 @@ import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import { API_CONFIG } from "../api/config";
-
+import { invalidateCache } from "../api/issues";
 // ---------- Types ----------
 type Category = {
   id: string;
@@ -651,7 +651,7 @@ export default function ReportIssueScreen() {
       });
 
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
+      invalidateCache();
       Alert.alert(
         "Issue Reported",
         "Your report has been submitted successfully. Thank you for helping improve your community!",

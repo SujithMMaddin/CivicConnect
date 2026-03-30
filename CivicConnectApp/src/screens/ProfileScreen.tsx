@@ -19,6 +19,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { supabase } from "../api/supabase";
 import { fetchIssues, type Issue } from "../api/issues";
 import { RootStackParamList } from "../navigation/AppNavigator";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -115,6 +116,17 @@ export default function ProfileScreen() {
       loadData();
     }, []),
   );
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const saved = await AsyncStorage.getItem("notifications_enabled");
+        if (saved !== null) setNotificationsEnabled(JSON.parse(saved));
+      } catch (err) {
+        console.error("Failed to load preferences:", err);
+      }
+    };
+    loadPreferences();
+  }, []);
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -194,17 +206,20 @@ export default function ProfileScreen() {
             icon="person-outline"
             title="Personal Information"
             subtitle={user?.email || "No email"}
+            onPress={() => navigation.navigate("PersonalInfo")}
           />
           <SettingsItem
             icon="shield-checkmark-outline"
             title="Privacy & Security"
             subtitle="Password, data settings"
+            onPress={() => navigation.navigate("PrivacySecurity")}
           />
           <SettingsItem
             icon="document-text-outline"
             title="My Reports"
             subtitle={`${totalReports} issues reported`}
             isLast
+            onPress={() => navigation.navigate("MyReports")}
           />
         </View>
 
@@ -217,7 +232,13 @@ export default function ProfileScreen() {
             subtitle="Push notifications for updates"
             showSwitch
             switchValue={notificationsEnabled}
-            onSwitchChange={setNotificationsEnabled}
+            onSwitchChange={async (value: boolean) => {
+              setNotificationsEnabled(value);
+              await AsyncStorage.setItem(
+                "notifications_enabled",
+                JSON.stringify(value),
+              );
+            }}
           />
           <SettingsItem
             icon="sunny-outline"
@@ -242,9 +263,19 @@ export default function ProfileScreen() {
             icon="help-circle-outline"
             title="Help Center"
             subtitle="FAQs and guides"
+            onPress={() => navigation.navigate("HelpCenter")}
           />
-          <SettingsItem icon="document-outline" title="Terms of Service" />
-          <SettingsItem icon="shield-outline" title="Privacy Policy" isLast />
+          <SettingsItem
+            icon="document-outline"
+            title="Terms of Service"
+            onPress={() => navigation.navigate("TermsOfService")}
+          />
+          <SettingsItem
+            icon="shield-outline"
+            title="Privacy Policy"
+            isLast
+            onPress={() => navigation.navigate("PrivacyPolicy")}
+          />
         </View>
 
         {/* Sign Out */}

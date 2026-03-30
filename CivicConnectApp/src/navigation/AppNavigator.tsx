@@ -16,6 +16,12 @@ export type RootStackParamList = {
   ContactSupport: undefined;
   AdminDashboard: undefined;
   CivicDataInsights: undefined;
+  PersonalInfo: undefined;
+  MyReports: undefined;
+  PrivacySecurity: undefined;
+  HelpCenter: undefined;
+  TermsOfService: undefined;
+  PrivacyPolicy: undefined;
 };
 
 export type TabParamList = {
@@ -89,6 +95,30 @@ const AppNavigator: React.FC = () => {
         initialRouteName="Splash"
         screenOptions={{ headerShown: false }}
       >
+        <Stack.Screen
+          name="HelpCenter"
+          component={require("../screens/HelpCenterScreen").default}
+        />
+        <Stack.Screen
+          name="TermsOfService"
+          component={require("../screens/TermsOfServiceScreen").default}
+        />
+        <Stack.Screen
+          name="PrivacyPolicy"
+          component={require("../screens/PrivacyPolicyScreen").default}
+        />
+        <Stack.Screen
+          name="PrivacySecurity"
+          component={require("../screens/PrivacySecurityScreen").default}
+        />
+        <Stack.Screen
+          name="MyReports"
+          component={require("../screens/MyReportsScreen").default}
+        />
+        <Stack.Screen
+          name="PersonalInfo"
+          component={require("../screens/PersonalInfoScreen").default}
+        />
         <Stack.Screen
           name="Splash"
           component={require("../screens/SplashScreen").default}

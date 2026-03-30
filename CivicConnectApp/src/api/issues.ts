@@ -11,17 +11,34 @@ export interface Issue {
   latitude: number;
   longitude: number;
   imageUrl?: string;
-  createdAt: string; // ISO date string
+  createdAt: string;
 }
 
-export const fetchIssues = async (): Promise<Issue[]> => {
+// ---------- Simple Cache ----------
+let cachedIssues: Issue[] | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 30000; // 30 seconds
+
+export const invalidateCache = () => {
+  cachedIssues = null;
+  cacheTimestamp = 0;
+};
+
+export const fetchIssues = async (forceRefresh = false): Promise<Issue[]> => {
+  const now = Date.now();
+
+  // Return cache if valid and not forcing refresh
+  if (!forceRefresh && cachedIssues && now - cacheTimestamp < CACHE_DURATION) {
+    return cachedIssues;
+  }
+
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}/api/issues`);
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: Failed to fetch issues`);
     }
     const rawIssues = await response.json();
-    return rawIssues.map((issue: any) => ({
+    const mapped = rawIssues.map((issue: any) => ({
       ...issue,
       id: Number(issue.id),
       category: (issue.category || "").toLowerCase(),
@@ -30,8 +47,16 @@ export const fetchIssues = async (): Promise<Issue[]> => {
         : "Untitled Issue",
       location: `Lat ${issue.latitude?.toFixed(4)}, Lng ${issue.longitude?.toFixed(4)}`,
     })) as Issue[];
+
+    // Save to cache
+    cachedIssues = mapped;
+    cacheTimestamp = now;
+
+    return mapped;
   } catch (error) {
     console.error("fetchIssues error:", error);
+    // Return stale cache if available during error
+    if (cachedIssues) return cachedIssues;
     throw error;
   }
 };
@@ -47,17 +72,10 @@ export const updateIssueStatus = async (
     throw new Error("Issue ID is required and must be a valid positive number");
   }
 
-  console.log("Updating issue:", { id: numId, status, priority });
-
   const response = await fetch(`${API_CONFIG.BASE_URL}/api/issues/${numId}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      status,
-      priority,
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status, priority }),
   });
 
   if (!response.ok) {
@@ -66,6 +84,8 @@ export const updateIssueStatus = async (
     throw new Error(`Failed to update issue ${numId}: ${response.status}`);
   }
 
+  // Invalidate cache after update
+  invalidateCache();
   return response.json();
 };
 

@@ -12,9 +12,9 @@
 - **Web Dashboard**: React Vite app (CivicReport) - view/manage issues, stats, profile.
 - **Backend**: Spring Boot Java REST API (civic-backend) - PostgreSQL, issue CRUD.
 - **Admin Web**: Static HTML/JS (admin-web).
-- **Experimental**: 'My new app' (another Vite React).
+- **Experimental**: 'My new app' (Vite React admin dashboard prototype).
 
-**Development Stage**: Active development. Mobile/web fronts mostly implemented, backend API ready with TODOs.
+**Development Stage**: Active development. Mobile/web fronts advanced with many screens/components implemented, backend API core ready, integrations/TODOs ongoing.
 
 **Base URL (Dev)**: Backend `http://localhost:8080/api/issues`
 
@@ -25,7 +25,7 @@
                            ├─ REST APIs ─ [Spring Boot Backend] ─ PostgreSQL
 [Admins] Web (React+Vite) ─┘     (duplicate detect, priority rules)
                      ↓
-                Static Admin Web
+                Static Admin Web + Prototypes
 ```
 
 - **Key Features**:
@@ -44,7 +44,6 @@
 - PostgreSQL driver
 - Maven build
 - Run: `cd civic-backend && mvn spring-boot:run`
-- Structure: Controllers (IssueController), Services (IssueService), Models (Issue.java)
 
 ### Mobile (CivicConnectApp)
 
@@ -52,96 +51,187 @@
 - React Navigation, Maps, Camera, Location, Image Picker
 - TypeScript
 - Run: `cd CivicConnectApp && npx expo start`
-- Screens: Home, Issues, Report, Profile, Landing, Insights
 
 ### Web (CivicReport)
 
 - React 19 + Vite
 - Tailwind CSS, shadcn/ui (Radix primitives), Lucide icons
-- Hono (backend?), Cloudflare Workers (wrangler)
-- Components: IssueCard, StatCard, UI primitives
-- Pages: Home, Issues, IssueDetail, Profile, Report
+- Hono/Cloudflare Workers (wrangler.toml)
 - Run: `cd CivicReport && npm run dev`
 
 ### Others
 
 - admin-web: Vanilla HTML/CSS/JS
-- My new app: Vite React prototype (AdminDashboard, etc.)
+- My new app: Vite React + Tailwind
 
-## 📁 File Structure Summary (Key Dirs)
+## 📁 Complete File Inventory (Excluding Ignorables: Builds, Locks, Binaries, Caches)
 
-```
-d:/SUJITH/UNIVERSITY_PROJECT/
-├── civic-backend/          # Java Spring Boot API
-│   ├── pom.xml
-│   ├── src/main/java/com/civic/backend/
-│   │   ├── CivicBackendApplication.java
-│   │   ├── controller/IssueController.java
-│   │   ├── service/IssueService.java
-│   │   └── model/Issue.java
-│   ├── PROJECT_STRUCTURE.md
-│   └── API_Contract.md
-├── CivicConnectApp/        # RN Expo Mobile
-│   ├── package.json
-│   ├── App.tsx
-│   ├── src/screens/        # HomeScreen, IssuesScreen, etc.
-│   ├── src/api/            # config.ts, issues.ts
-│   └── android/
-├── CivicReport/            # React Web Dashboard
-│   ├── package.json
-│   ├── src/react-app/
-│   │   ├── pages/          # Home.tsx, Issues.tsx, etc.
-│   │   └── components/     # IssueCard.tsx, StatCard.tsx, ui/
-│   └── vite.config.ts
-├── admin-web/              # Static admin
-│   └── index.html
-└── My new app/             # Prototype
-    └── src/react-app/pages/AdminDashboard.tsx
-```
+### Root Directory (d:/SUJITH/UNIVERSITY_PROJECT/)
 
-**Full recursive list**: Use VSCode explorer or `tree /f` in cmd.
+- .gitignore
+- PROJECT_CONTEXT.md
+- TODO.md
 
-## 🎯 Current State & TODOs
+### admin-web/
 
-### Open Tabs (VSCode Focus)
+- index.html
+- script.js
+- style.css
+- TODO.md
 
-- CivicConnectApp: screens (AdminDashboardScreen, HomeScreen, IssuesScreen, ProfileScreen, ReportIssueScreen, CivicDataInsightsScreen, IssueDetailScreen, LandingPage), components (StatCard, IssueCard), api (issues.ts, config.ts), types.ts, theme.ts, package.json, App.tsx
-- CivicReport: pages (Home.tsx, Issues.tsx, IssueDetail.tsx, Profile.tsx, Report.tsx), components (StatCard.tsx, MobileLayout.tsx)
-- Backend: civic-backend controllers/services/model (IssueController.java, IssueService.java, Issue.java)
-- Others: My new app AdminDashboard.tsx, PROJECT_CONTEXT.md, TODO.md
+### civic-backend/
 
-### TODO Status
+- .gitattributes
+- .gitignore
+- API_Contract.md
+- mvnw
+- mvnw.cmd
+- pom.xml
+- PROJECT_STRUCTURE.md
+- TODO.md
+- src/main/java/com/civic/backend/ (all .java files: controllers like IssueController.java, services like IssueService.java, models like Issue.java, main app class)
+- src/main/resources/application.properties
+- src/test/java/com/civic/backend/ (test classes)
 
-- **civic-backend/TODO.md** ⏳ _Issue Creation Fix_:
-  1. ✅ Null checks in IssueService.createIssue()
-  2. ⏳ Rebuild/restart backend (`cd civic-backend && mvn clean spring-boot:run`)
-  3. ⏳ Test submission via frontend/Postman
-  4. ⏳ Verify DB (priority='Medium', status='Pending')
-- **admin-web/TODO.md** ✅ Pinterest-inspired UI redesign complete (CSS palette, cards, filters, table, responsiveness preserved)
-- **My new app/TODO.md** ✅ Project cleanup complete (package.json → "civic-admin-dashboard", README, index.html Mocha removal)
-- **Root TODO.md** ⏳ Frontend undefined ID fix in progress (AdminDashboard.tsx: issue.issueId → issue.id; pending API/navigation guards)
-- **CivicReport/docs/todo.md** ⏳ Pending: Leaflet map, animations, real image upload
+### CivicConnectApp/
 
-**Recent Work**:
+- .gitignore
+- app.json
+- App.tsx
+- index.ts
+- package.json
+- tsconfig.json
+- android/app/src/main/AndroidManifest.xml (key config)
+- android/gradle/wrapper/gradle-wrapper.properties
+- assets/adaptive-icon.png, assets/favicon.png, assets/icon.png, assets/logo.png (icons only)
+- src/api/config.ts
+- src/api/issues.ts
+- src/api/supabase.ts
+- src/components/IssueCard.tsx
+- src/components/StatCard.tsx
+- src/navigation/AppNavigator.tsx
+- src/screens/AboutScreen.tsx
+- src/screens/AdminDashboardScreen.tsx
+- src/screens/CivicDataInsightsScreen.tsx
+- src/screens/ContactSupportScreen.tsx
+- src/screens/HomeScreen.tsx
+- src/screens/IssueDetailScreen.tsx
+- src/screens/IssuesScreen.tsx
+- src/screens/LandingPage.tsx
+- src/screens/LoginPage.tsx
+- src/screens/MyReportsScreen.tsx
+- src/screens/PersonalInfoScreen.tsx
+- src/screens/ProfileScreen.tsx
+- src/screens/ReportIssueScreen.tsx
+- src/screens/SignupPage.tsx
+- src/screens/SplashScreen.tsx
+- src/styles/colors.ts
+- src/styles/theme.ts
+- src/types.ts
+- src/utils/stats.ts
+- TODO.md
 
-- Backend: null-safety in IssueService.createIssue()
-- admin-web: Full Pinterest UI redesign (neutral palette, shadows, rounded elements)
-- My new app: Cleanup (renamed civic-admin-dashboard, removed Mocha), fixed issue.id in AdminDashboard
-- Frontend: Ongoing ID error fixes (navigation/API guards pending)
-  Ready for backend rebuild/integration testing.
+### CivicReport/
 
-## 🚀 Quick Start / Run Commands
+- .gitignore
+- eslint.config.js
+- index.html
+- knip.json
+- package.json
+- postcss.config.js
+- README.md
+- tailwind.config.js
+- tsconfig.app.json
+- tsconfig.json
+- tsconfig.node.json
+- tsconfig.worker.json
+- vite.config.ts
+- wrangler.json
+- docs/todo.md
+- public/robots.txt
+- src/react-app/App.tsx
+- src/react-app/index.css
+- src/react-app/main.tsx
+- src/react-app/vite-env.d.ts
+- src/react-app/components/IssueCard.tsx
+- src/react-app/components/StatCard.tsx
+- src/react-app/components/layout/MobileLayout.tsx
+- src/react-app/components/ui/ (all primitives: accordion.tsx, alert-dialog.tsx, avatar.tsx, badge.tsx, button.tsx, card.tsx, checkbox.tsx, collapsible.tsx, dialog.tsx, dropdown-menu.tsx, field.tsx, input-group.tsx, input.tsx, label.tsx, popover.tsx, progress.tsx, radio-group.tsx, scroll-area.tsx, select.tsx)
+- src/react-app/data/issues.ts
+- src/react-app/lib/utils.ts
+- src/react-app/pages/Home.tsx
+- src/react-app/pages/IssueDetail.tsx
+- src/react-app/pages/Issues.tsx
+- src/react-app/pages/Profile.tsx
+- src/react-app/pages/Report.tsx
+- src/shared/types.ts
+- src/worker/index.ts
 
-1. **Backend**: `cd civic-backend && mvn clean spring-boot:run` (port 8080)
-2. **Mobile**: `cd CivicConnectApp && npx expo start` (scan QR or android)
-3. **Web**: `cd CivicReport && npm install && npm run dev` (localhost:5173)
-4. **Admin**: Open `admin-web/index.html` in browser.
+### My new app/
 
-## 🔗 Key Files for AI Agents
+- .gitignore
+- eslint.config.js
+- index.html
+- knip.json
+- package.json
+- postcss.config.js
+- README.md
+- tailwind.config.js
+- TODO.md
+- tsconfig.app.json
+- tsconfig.json
+- tsconfig.node.json
+- tsconfig.worker.json
+- vite.config.ts
+- wrangler.json
+- docs/todo.md
+- src/react-app/App.tsx
+- src/react-app/index.css
+- src/react-app/main.tsx
+- src/react-app/vite-env.d.ts
+- src/react-app/pages/AdminDashboard.tsx
+- src/react-app/pages/Home.tsx
+- src/shared/api.ts
+- src/shared/types.ts
+- src/worker/index.ts
 
-- Backend API: civic-backend/API_Contract.md, PROJECT_STRUCTURE.md
-- Mobile types: CivicConnectApp/src/types.ts
-- Web types: CivicReport/src/shared/types.ts
+## 🎯 Current State & Till-Date Updates
 
-**Last Updated**: October 2024
-_Share this file with other AIs for instant project context._
+### VSCode Focus (Active Development Areas)
+
+Heavy emphasis on CivicConnectApp screens (AdminDashboardScreen, HomeScreen, IssuesScreen, ProfileScreen, ReportIssueScreen, CivicDataInsightsScreen, MyReportsScreen), backend Issue\* (Controller/Service/Model), CivicReport pages (Issues, Home, Report, Profile).
+
+### TODO Progress
+
+- **civic-backend/TODO.md**: Issue creation null-safety ✅; rebuild/test pending ⏳
+- **admin-web/TODO.md**: Pinterest UI redesign complete ✅
+- **My new app/TODO.md**: Cleanup/rename complete ✅; issue.id fixes in AdminDashboard ✅
+- **Root TODO.md**: Frontend ID fixes (issue.issueId → issue.id) in progress ⏳
+- **CivicReport/docs/todo.md**: Maps/animations pending ⏳
+- **CivicConnectApp/TODO.md**: Various screens/components updated.
+
+### Recent/Updated Code Highlights (Till Date)
+
+- Backend: Null-safety in IssueService.createIssue(), core Issue model/controller.
+- admin-web: Full responsive Pinterest-inspired redesign (CSS, JS).
+- My new app: Renamed to civic-admin-dashboard prototype, AdminDashboard.tsx with stats/API integration, Home.tsx.
+- CivicConnectApp: Comprehensive screens (Splash→Landing→Auth→Home/Issues/Report/Profile/Insights/Admin), navigation, API layers (Supabase config, issues.ts), components (IssueCard, StatCard), theme/styles.
+- CivicReport: Full UI primitives (shadcn), pages (Home/Issues/Detail/Profile/Report), responsive MobileLayout, data mocks, utils.
+
+**Integration Status**: Frontends ready for backend API calls; testing duplicate/priority logic next.
+
+## 🚀 Quick Start Commands
+
+1. **Backend**: `cd civic-backend && mvn clean spring-boot:run`
+2. **Mobile**: `cd CivicConnectApp && npx expo start`
+3. **CivicReport Web**: `cd CivicReport && npm install && npm run dev`
+4. **My new app**: `cd \"My new app\" && npm install && npm run dev`
+5. **Admin**: Open `admin-web/index.html`
+
+## 🔗 Key Reference Files
+
+- API: civic-backend/API_Contract.md, PROJECT_STRUCTURE.md
+- Types: CivicConnectApp/src/types.ts, CivicReport/src/shared/types.ts, My new app/src/shared/types.ts
+
+**Last Updated**: Current as of latest environment scan. Full source control via Git.
+_Share this with AI agents for complete project context._
