@@ -2,27 +2,28 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  ScrollView,
+  TextInput,
   ActivityIndicator,
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { supabase } from "../api/supabase";
+import { useTheme } from "../context/ThemeContext";
 
 export default function PersonalInfoScreen() {
   const navigation = useNavigation();
+  const { colors, isDark } = useTheme();
   const [user, setUser] = useState<any>(null);
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [editingName, setEditingName] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -32,7 +33,6 @@ export default function PersonalInfoScreen() {
         } = await supabase.auth.getUser();
         setUser(user);
         setFullName(user?.user_metadata?.full_name || "");
-        setEmail(user?.email || "");
       } catch (err) {
         console.error("Load user error:", err);
       } finally {
@@ -42,7 +42,7 @@ export default function PersonalInfoScreen() {
     loadUser();
   }, []);
 
-  const handleSaveName = async () => {
+  const handleSave = async () => {
     if (!fullName.trim()) {
       Alert.alert("Error", "Name cannot be empty.");
       return;
@@ -50,16 +50,16 @@ export default function PersonalInfoScreen() {
     setSaving(true);
     try {
       const { error } = await supabase.auth.updateUser({
-        data: { full_name: fullName },
+        data: { full_name: fullName.trim() },
       });
       if (error) {
-        Alert.alert("Update Failed", error.message);
+        Alert.alert("Error", error.message);
         return;
       }
-      setEditingName(false);
-      Alert.alert("Success", "Your name has been updated successfully.");
+      Alert.alert("Success", "Your name has been updated.");
+      setEditing(false);
     } catch (err) {
-      Alert.alert("Error", "Something went wrong. Please try again.");
+      Alert.alert("Error", "Could not update your name. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -67,186 +67,223 @@ export default function PersonalInfoScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2563EB" />
-          <Text style={styles.loadingText}>Loading...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
+  const memberSince = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "Unknown";
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
+      />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.card }]}
           onPress={() => navigation.goBack()}
-          style={styles.backButton}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={22} color="#0F172A" />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Personal Information</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Personal Information
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Avatar */}
         <View style={styles.avatarSection}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={40} color="#2563EB" />
+          <View style={styles.avatarCircle}>
+            <Ionicons name="person-outline" size={44} color="#2563EB" />
           </View>
-          <Text style={styles.avatarName}>{fullName || "Civic User"}</Text>
-          <Text style={styles.avatarRole}>Community Member</Text>
+          <Text style={[styles.avatarName, { color: colors.text }]}>
+            {fullName || "Civic User"}
+          </Text>
+          <Text style={[styles.avatarRole, { color: "#2563EB" }]}>
+            Community Member
+          </Text>
         </View>
 
-        {/* Profile Details */}
-        <Text style={styles.sectionTitle}>PROFILE DETAILS</Text>
-        <View style={styles.sectionCard}>
-          {/* Full Name */}
-          <View style={styles.infoItem}>
-            <View style={styles.infoHeader}>
-              <View style={styles.infoIconBox}>
-                <Ionicons name="person-outline" size={18} color="#4B5563" />
-              </View>
-              <Text style={styles.infoLabel}>FULL NAME</Text>
-            </View>
-            {editingName ? (
-              <View style={styles.editRow}>
+        {/* Full Name */}
+        <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>
+          ACCOUNT DETAILS
+        </Text>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
+          <View style={styles.fieldRow}>
+            <View style={styles.fieldLeft}>
+              <Text
+                style={[styles.fieldLabel, { color: colors.textSecondary }]}
+              >
+                Full Name
+              </Text>
+              {editing ? (
                 <TextInput
-                  style={styles.editInput}
+                  style={[
+                    styles.fieldInput,
+                    { color: colors.text, borderColor: colors.border },
+                  ]}
                   value={fullName}
                   onChangeText={setFullName}
                   autoFocus
-                  placeholder="Enter your full name"
-                  placeholderTextColor="#9CA3AF"
+                  placeholder="Enter your name"
+                  placeholderTextColor={colors.textSecondary}
                 />
+              ) : (
+                <Text style={[styles.fieldValue, { color: colors.text }]}>
+                  {fullName || "Not set"}
+                </Text>
+              )}
+            </View>
+            {editing ? (
+              <View style={styles.editActions}>
                 <TouchableOpacity
-                  style={styles.saveBtn}
-                  onPress={handleSaveName}
-                  disabled={saving}
-                  activeOpacity={0.8}
+                  onPress={() => setEditing(false)}
+                  style={styles.cancelBtn}
                 >
-                  {saving ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.saveBtnText}>Save</Text>
-                  )}
+                  <Ionicons
+                    name="close"
+                    size={20}
+                    color={colors.textSecondary}
+                  />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.cancelBtn}
-                  onPress={() => setEditingName(false)}
-                  activeOpacity={0.8}
+                  onPress={handleSave}
+                  style={styles.saveBtn}
+                  disabled={saving}
                 >
-                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                  {saving ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Ionicons name="checkmark" size={20} color="#fff" />
+                  )}
                 </TouchableOpacity>
               </View>
             ) : (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoValue}>{fullName || "Not set"}</Text>
-                <TouchableOpacity
-                  onPress={() => setEditingName(true)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="pencil-outline" size={18} color="#2563EB" />
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                onPress={() => setEditing(true)}
+                style={[
+                  styles.editBtn,
+                  { backgroundColor: isDark ? colors.border : "#EFF6FF" },
+                ]}
+              >
+                <Ionicons name="pencil-outline" size={16} color="#2563EB" />
+              </TouchableOpacity>
             )}
           </View>
 
-          {/* Divider */}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           {/* Email */}
-          <View style={styles.infoItem}>
-            <View style={styles.infoHeader}>
-              <View style={styles.infoIconBox}>
-                <Ionicons name="mail-outline" size={18} color="#4B5563" />
-              </View>
-              <Text style={styles.infoLabel}>EMAIL ADDRESS</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoValue}>{email || "Not set"}</Text>
-              <View style={styles.verifiedBadge}>
-                <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                <Text style={styles.verifiedText}>Verified</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Divider */}
-          <View style={styles.divider} />
-
-          {/* Member Since */}
-          <View style={styles.infoItem}>
-            <View style={styles.infoHeader}>
-              <View style={styles.infoIconBox}>
-                <Ionicons name="calendar-outline" size={18} color="#4B5563" />
-              </View>
-              <Text style={styles.infoLabel}>MEMBER SINCE</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoValue}>
-                {user?.created_at
-                  ? new Date(user.created_at).toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })
-                  : "N/A"}
+          <View style={styles.fieldRow}>
+            <View style={styles.fieldLeft}>
+              <Text
+                style={[styles.fieldLabel, { color: colors.textSecondary }]}
+              >
+                Email Address
               </Text>
+              <Text style={[styles.fieldValue, { color: colors.text }]}>
+                {user?.email || "No email"}
+              </Text>
+            </View>
+            <View style={styles.verifiedBadge}>
+              <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+              <Text style={styles.verifiedText}>Verified</Text>
             </View>
           </View>
         </View>
 
-        {/* Account ID */}
-        <Text style={styles.sectionTitle}>ACCOUNT</Text>
-        <View style={styles.sectionCard}>
-          <View style={styles.infoItem}>
-            <View style={styles.infoHeader}>
-              <View style={styles.infoIconBox}>
-                <Ionicons
-                  name="finger-print-outline"
-                  size={18}
-                  color="#4B5563"
-                />
-              </View>
-              <Text style={styles.infoLabel}>USER ID</Text>
+        {/* Account Info */}
+        <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>
+          ACCOUNT INFO
+        </Text>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
+          <View style={styles.infoRow}>
+            <Ionicons
+              name="calendar-outline"
+              size={18}
+              color={colors.textSecondary}
+            />
+            <View style={styles.infoText}>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+                Member Since
+              </Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>
+                {memberSince}
+              </Text>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoValueSmall} numberOfLines={1}>
-                {user?.id || "N/A"}
+          </View>
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={styles.infoRow}>
+            <Ionicons
+              name="finger-print-outline"
+              size={18}
+              color={colors.textSecondary}
+            />
+            <View style={styles.infoText}>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+                User ID
+              </Text>
+              <Text
+                style={[styles.infoValue, { color: colors.text }]}
+                numberOfLines={1}
+              >
+                {user?.id?.slice(0, 16)}...
               </Text>
             </View>
           </View>
         </View>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { marginTop: 12, fontSize: 15, color: "#64748B" },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -254,39 +291,32 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  headerTitle: { fontSize: 18, fontWeight: "700", color: "#0F172A" },
-  scroll: { flex: 1, paddingHorizontal: 16 },
-  avatarSection: { alignItems: "center", paddingVertical: 24 },
-  avatar: {
+  headerTitle: { fontSize: 17, fontWeight: "700" },
+  scrollContent: { padding: 20, paddingBottom: 40 },
+  avatarSection: { alignItems: "center", marginBottom: 28 },
+  avatarCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
     backgroundColor: "#DBEAFE",
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 12,
     borderWidth: 2,
     borderColor: "#BFDBFE",
-    marginBottom: 12,
   },
-  avatarName: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 4,
-  },
-  avatarRole: { fontSize: 13, color: "#2563EB", fontWeight: "600" },
-  sectionTitle: {
+  avatarName: { fontSize: 20, fontWeight: "700", marginBottom: 4 },
+  avatarRole: { fontSize: 13, fontWeight: "600" },
+  sectionHeader: {
     fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    color: "#94A3B8",
+    fontWeight: "600",
     marginBottom: 10,
+    marginLeft: 5,
+    letterSpacing: 1,
   },
-  sectionCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
+  card: {
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#F1F5F9",
     marginBottom: 20,
     overflow: "hidden",
     shadowColor: "#000",
@@ -294,63 +324,54 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
-  infoItem: { padding: 16 },
-  infoHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
+  fieldRow: { flexDirection: "row", alignItems: "center", padding: 16 },
+  fieldLeft: { flex: 1 },
+  fieldLabel: { fontSize: 12, marginBottom: 4 },
+  fieldValue: { fontSize: 15, fontWeight: "500" },
+  fieldInput: {
+    fontSize: 15,
+    fontWeight: "500",
+    borderBottomWidth: 1,
+    paddingBottom: 4,
+    marginTop: 2,
   },
-  infoIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+  editActions: { flexDirection: "row", gap: 8 },
+  cancelBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: "#F1F5F9",
     justifyContent: "center",
     alignItems: "center",
-  },
-  infoLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#94A3B8",
-    letterSpacing: 1,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  infoValue: { fontSize: 15, fontWeight: "500", color: "#0F172A" },
-  infoValueSmall: { fontSize: 12, color: "#64748B", flex: 1 },
-  divider: { height: 1, backgroundColor: "#F1F5F9" },
-  editRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  editInput: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 15,
-    color: "#0F172A",
-    borderWidth: 1,
-    borderColor: "#DBEAFE",
   },
   saveBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: "#2563EB",
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
     justifyContent: "center",
     alignItems: "center",
   },
-  saveBtnText: { color: "#FFFFFF", fontWeight: "600", fontSize: 13 },
-  cancelBtn: {
-    backgroundColor: "#F1F5F9",
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+  editBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  cancelBtnText: { color: "#64748B", fontWeight: "600", fontSize: 13 },
-  verifiedBadge: { flexDirection: "row", alignItems: "center", gap: 4 },
-  verifiedText: { fontSize: 12, color: "#10B981", fontWeight: "600" },
+  verifiedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#ECFDF5",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  verifiedText: { fontSize: 12, fontWeight: "600", color: "#10B981" },
+  divider: { height: 1, marginHorizontal: 16 },
+  infoRow: { flexDirection: "row", alignItems: "center", padding: 16, gap: 14 },
+  infoText: { flex: 1 },
+  infoLabel: { fontSize: 12, marginBottom: 2 },
+  infoValue: { fontSize: 14, fontWeight: "500" },
 });

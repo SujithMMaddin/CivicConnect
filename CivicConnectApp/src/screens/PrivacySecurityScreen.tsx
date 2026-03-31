@@ -17,8 +17,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { supabase } from "../api/supabase";
+import { useTheme } from "../context/ThemeContext";
 
-// --- Reusable Row ---
 const SecurityItem = ({
   icon,
   title,
@@ -26,35 +26,52 @@ const SecurityItem = ({
   onPress,
   isLast,
   destructive,
-}: any) => (
-  <TouchableOpacity
-    style={[styles.settingsItem, isLast && { borderBottomWidth: 0 }]}
-    onPress={onPress}
-    activeOpacity={0.7}
-  >
-    <View
+}: any) => {
+  const { colors } = useTheme();
+  return (
+    <TouchableOpacity
       style={[
-        styles.iconContainer,
-        destructive && { backgroundColor: "#FEE2E2" },
+        styles.settingsItem,
+        { borderBottomColor: colors.border },
+        isLast && { borderBottomWidth: 0 },
       ]}
+      onPress={onPress}
+      activeOpacity={0.7}
     >
-      <Ionicons
-        name={icon}
-        size={20}
-        color={destructive ? "#EF4444" : "#4B5563"}
-      />
-    </View>
-    <View style={styles.settingsTextContainer}>
-      <Text style={[styles.settingsTitle, destructive && { color: "#EF4444" }]}>
-        {title}
-      </Text>
-      {subtitle && <Text style={styles.settingsSubtitle}>{subtitle}</Text>}
-    </View>
-    <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-  </TouchableOpacity>
-);
+      <View
+        style={[
+          styles.iconContainer,
+          { backgroundColor: destructive ? "#FEE2E2" : colors.background },
+        ]}
+      >
+        <Ionicons
+          name={icon}
+          size={20}
+          color={destructive ? "#EF4444" : colors.textSecondary}
+        />
+      </View>
+      <View style={styles.settingsTextContainer}>
+        <Text
+          style={[
+            styles.settingsTitle,
+            { color: destructive ? "#EF4444" : colors.text },
+          ]}
+        >
+          {title}
+        </Text>
+        {subtitle && (
+          <Text
+            style={[styles.settingsSubtitle, { color: colors.textSecondary }]}
+          >
+            {subtitle}
+          </Text>
+        )}
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+    </TouchableOpacity>
+  );
+};
 
-// --- Change Password Modal ---
 const ChangePasswordModal = ({
   visible,
   onClose,
@@ -62,6 +79,7 @@ const ChangePasswordModal = ({
   visible: boolean;
   onClose: () => void;
 }) => {
+  const { colors } = useTheme();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNew, setShowNew] = useState(false);
@@ -81,7 +99,6 @@ const ChangePasswordModal = ({
       Alert.alert("Error", "Passwords do not match.");
       return;
     }
-
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({
@@ -124,34 +141,44 @@ const ChangePasswordModal = ({
           activeOpacity={1}
           onPress={onClose}
         />
-        <View style={styles.bottomSheet}>
-          {/* Handle */}
-          <View style={styles.handle} />
-
-          {/* Header */}
+        <View style={[styles.bottomSheet, { backgroundColor: colors.card }]}>
+          <View style={[styles.handle, { backgroundColor: colors.border }]} />
           <View style={styles.sheetHeader}>
             <View style={styles.sheetIconBox}>
               <Ionicons name="lock-closed-outline" size={24} color="#2563EB" />
             </View>
-            <Text style={styles.sheetTitle}>Change Password</Text>
-            <Text style={styles.sheetSubtitle}>
+            <Text style={[styles.sheetTitle, { color: colors.text }]}>
+              Change Password
+            </Text>
+            <Text
+              style={[styles.sheetSubtitle, { color: colors.textSecondary }]}
+            >
               Choose a strong password with at least 6 characters
             </Text>
           </View>
 
-          {/* New Password */}
-          <Text style={styles.fieldLabel}>New Password</Text>
-          <View style={styles.inputRow}>
+          <Text style={[styles.fieldLabel, { color: colors.text }]}>
+            New Password
+          </Text>
+          <View
+            style={[
+              styles.inputRow,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+              },
+            ]}
+          >
             <Ionicons
               name="lock-closed-outline"
               size={18}
-              color="#9CA3AF"
+              color={colors.textSecondary}
               style={{ marginRight: 10 }}
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: colors.text }]}
               placeholder="Enter new password"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textSecondary}
               secureTextEntry={!showNew}
               value={newPassword}
               onChangeText={setNewPassword}
@@ -161,24 +188,33 @@ const ChangePasswordModal = ({
               <Ionicons
                 name={showNew ? "eye-off-outline" : "eye-outline"}
                 size={20}
-                color="#9CA3AF"
+                color={colors.textSecondary}
               />
             </TouchableOpacity>
           </View>
 
-          {/* Confirm Password */}
-          <Text style={styles.fieldLabel}>Confirm Password</Text>
-          <View style={styles.inputRow}>
+          <Text style={[styles.fieldLabel, { color: colors.text }]}>
+            Confirm Password
+          </Text>
+          <View
+            style={[
+              styles.inputRow,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+              },
+            ]}
+          >
             <Ionicons
               name="lock-closed-outline"
               size={18}
-              color="#9CA3AF"
+              color={colors.textSecondary}
               style={{ marginRight: 10 }}
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: colors.text }]}
               placeholder="Confirm new password"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textSecondary}
               secureTextEntry={!showConfirm}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -188,12 +224,11 @@ const ChangePasswordModal = ({
               <Ionicons
                 name={showConfirm ? "eye-off-outline" : "eye-outline"}
                 size={20}
-                color="#9CA3AF"
+                color={colors.textSecondary}
               />
             </TouchableOpacity>
           </View>
 
-          {/* Password match indicator */}
           {confirmPassword.length > 0 && (
             <View style={styles.matchRow}>
               <Ionicons
@@ -221,7 +256,6 @@ const ChangePasswordModal = ({
             </View>
           )}
 
-          {/* Update Button */}
           <TouchableOpacity
             style={[styles.updateBtn, loading && { opacity: 0.7 }]}
             onPress={handleChangePassword}
@@ -234,14 +268,16 @@ const ChangePasswordModal = ({
               <Text style={styles.updateBtnText}>Update Password</Text>
             )}
           </TouchableOpacity>
-
-          {/* Cancel */}
           <TouchableOpacity
-            style={styles.cancelBtn}
+            style={[styles.cancelBtn, { backgroundColor: colors.border }]}
             onPress={onClose}
             activeOpacity={0.8}
           >
-            <Text style={styles.cancelBtnText}>Cancel</Text>
+            <Text
+              style={[styles.cancelBtnText, { color: colors.textSecondary }]}
+            >
+              Cancel
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -249,9 +285,9 @@ const ChangePasswordModal = ({
   );
 };
 
-// --- Main Screen ---
 export default function PrivacySecurityScreen() {
   const navigation = useNavigation();
+  const { colors, isDark } = useTheme();
   const [changePasswordVisible, setChangePasswordVisible] = useState(false);
 
   const handleDeleteAccount = () => {
@@ -263,31 +299,36 @@ export default function PrivacySecurityScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: async () => {
+          onPress: () =>
             Alert.alert(
               "Contact Support",
-              "To delete your account, please contact support at support@civicconnect.app",
-            );
-          },
+              "To delete your account, please contact support@civicconnect.app",
+            ),
         },
       ],
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
+      />
 
-      {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.card }]}
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={22} color="#111827" />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Privacy & Security</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Privacy & Security
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -295,9 +336,15 @@ export default function PrivacySecurityScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Password Section */}
-        <Text style={styles.sectionHeader}>PASSWORD</Text>
-        <View style={styles.sectionCard}>
+        <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>
+          PASSWORD
+        </Text>
+        <View
+          style={[
+            styles.sectionCard,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <SecurityItem
             icon="lock-closed-outline"
             title="Change Password"
@@ -307,9 +354,15 @@ export default function PrivacySecurityScreen() {
           />
         </View>
 
-        {/* Privacy Section */}
-        <Text style={styles.sectionHeader}>PRIVACY</Text>
-        <View style={styles.sectionCard}>
+        <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>
+          PRIVACY
+        </Text>
+        <View
+          style={[
+            styles.sectionCard,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <SecurityItem
             icon="eye-off-outline"
             title="Data Usage"
@@ -335,9 +388,15 @@ export default function PrivacySecurityScreen() {
           />
         </View>
 
-        {/* Danger Zone */}
-        <Text style={styles.sectionHeader}>DANGER ZONE</Text>
-        <View style={styles.sectionCard}>
+        <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>
+          DANGER ZONE
+        </Text>
+        <View
+          style={[
+            styles.sectionCard,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <SecurityItem
             icon="trash-outline"
             title="Delete Account"
@@ -349,7 +408,6 @@ export default function PrivacySecurityScreen() {
         </View>
       </ScrollView>
 
-      {/* Change Password Modal */}
       <ChangePasswordModal
         visible={changePasswordVisible}
         onClose={() => setChangePasswordVisible(false)}
@@ -358,24 +416,20 @@ export default function PrivacySecurityScreen() {
   );
 }
 
-// --- Styles ---
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: "#F9FAFB",
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -383,21 +437,18 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  headerTitle: { fontSize: 17, fontWeight: "700", color: "#111827" },
+  headerTitle: { fontSize: 17, fontWeight: "700" },
   scrollContent: { padding: 20, paddingBottom: 40 },
   sectionHeader: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#9CA3AF",
     marginBottom: 10,
     marginLeft: 5,
     letterSpacing: 1,
   },
   sectionCard: {
-    backgroundColor: "#FFF",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#F3F4F6",
     marginBottom: 20,
     overflow: "hidden",
     shadowColor: "#000",
@@ -410,32 +461,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
   },
   iconContainer: {
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: "#F3F4F6",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
   settingsTextContainer: { flex: 1 },
-  settingsTitle: { fontSize: 15, fontWeight: "500", color: "#111827" },
-  settingsSubtitle: { fontSize: 12, color: "#9CA3AF", marginTop: 2 },
-
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
+  settingsTitle: { fontSize: 15, fontWeight: "500" },
+  settingsSubtitle: { fontSize: 12, marginTop: 2 },
+  modalOverlay: { flex: 1, justifyContent: "flex-end" },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.4)",
   },
   bottomSheet: {
-    backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -445,7 +488,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#E2E8F0",
     alignSelf: "center",
     marginBottom: 20,
   },
@@ -459,36 +501,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  sheetTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 6,
-  },
-  sheetSubtitle: {
-    fontSize: 13,
-    color: "#6B7280",
-    textAlign: "center",
-    lineHeight: 18,
-  },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 8,
-  },
+  sheetTitle: { fontSize: 20, fontWeight: "700", marginBottom: 6 },
+  sheetSubtitle: { fontSize: 13, textAlign: "center", lineHeight: 18 },
+  fieldLabel: { fontSize: 13, fontWeight: "600", marginBottom: 8 },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F9FAFB",
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 14,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
-  input: { flex: 1, fontSize: 15, color: "#111827" },
+  input: { flex: 1, fontSize: 15 },
   matchRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -509,11 +534,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   updateBtnText: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
-  cancelBtn: {
-    backgroundColor: "#F1F5F9",
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  cancelBtnText: { fontSize: 15, fontWeight: "600", color: "#64748B" },
+  cancelBtn: { borderRadius: 14, paddingVertical: 14, alignItems: "center" },
+  cancelBtnText: { fontSize: 15, fontWeight: "600" },
 });

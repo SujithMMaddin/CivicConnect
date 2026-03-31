@@ -138,22 +138,6 @@ const AppNavigator: React.FC = () => {
           component={require("../screens/SignupPage").default}
         />
         <Stack.Screen name="MainTabs" component={MainTabs} />
-        <Stack.Screen
-          name="About"
-          component={require("../screens/AboutScreen").default}
-        />
-        <Stack.Screen
-          name="ContactSupport"
-          component={require("../screens/ContactSupportScreen").default}
-        />
-        <Stack.Screen
-          name="AdminDashboard"
-          component={require("../screens/AdminDashboardScreen").default}
-        />
-        <Stack.Screen
-          name="CivicDataInsights"
-          component={require("../screens/CivicDataInsightsScreen").default}
-        />
       </Stack.Navigator>
     </NavigationContainer>
   );

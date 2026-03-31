@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { useTheme } from "../context/ThemeContext";
 
 const FAQS = [
   {
@@ -60,7 +61,7 @@ const FAQS = [
   {
     question: "How do I contact support?",
     answer:
-      "Go to Profile → Contact Support or email us at support@civicconnect.app. We typically respond within 24 hours.",
+      "Email us at support@civicconnect.app. We typically respond within 24 hours.",
   },
 ];
 
@@ -71,8 +72,8 @@ const FAQItem = ({
   question: string;
   answer: string;
 }) => {
+  const { colors } = useTheme();
   const [expanded, setExpanded] = useState(false);
-
   return (
     <TouchableOpacity
       style={styles.faqItem}
@@ -80,35 +81,48 @@ const FAQItem = ({
       activeOpacity={0.7}
     >
       <View style={styles.faqHeader}>
-        <Text style={styles.faqQuestion}>{question}</Text>
+        <Text style={[styles.faqQuestion, { color: colors.text }]}>
+          {question}
+        </Text>
         <Ionicons
           name={expanded ? "chevron-up" : "chevron-down"}
           size={18}
-          color="#6B7280"
+          color={colors.textSecondary}
         />
       </View>
-      {expanded && <Text style={styles.faqAnswer}>{answer}</Text>}
+      {expanded && (
+        <Text style={[styles.faqAnswer, { color: colors.textSecondary }]}>
+          {answer}
+        </Text>
+      )}
     </TouchableOpacity>
   );
 };
 
 export default function HelpCenterScreen() {
   const navigation = useNavigation();
+  const { colors, isDark } = useTheme();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
+      />
 
-      {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.card }]}
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={22} color="#111827" />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Help Center</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Help Center
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -116,34 +130,59 @@ export default function HelpCenterScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Hero */}
         <View style={styles.hero}>
           <View style={styles.heroIconBox}>
             <Ionicons name="help-circle-outline" size={36} color="#2563EB" />
           </View>
-          <Text style={styles.heroTitle}>How can we help?</Text>
-          <Text style={styles.heroSubtitle}>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>
+            How can we help?
+          </Text>
+          <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
             Find answers to common questions about CivicConnect
           </Text>
         </View>
 
-        {/* FAQs */}
-        <Text style={styles.sectionHeader}>FREQUENTLY ASKED QUESTIONS</Text>
-        <View style={styles.faqCard}>
+        <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>
+          FREQUENTLY ASKED QUESTIONS
+        </Text>
+        <View
+          style={[
+            styles.faqCard,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           {FAQS.map((faq, index) => (
             <View key={index}>
               <FAQItem question={faq.question} answer={faq.answer} />
-              {index < FAQS.length - 1 && <View style={styles.divider} />}
+              {index < FAQS.length - 1 && (
+                <View
+                  style={[styles.divider, { backgroundColor: colors.border }]}
+                />
+              )}
             </View>
           ))}
         </View>
 
-        {/* Contact Support */}
-        <View style={styles.contactCard}>
+        <View
+          style={[
+            styles.contactCard,
+            {
+              backgroundColor: isDark ? "#1e3a5f" : "#EFF6FF",
+              borderColor: isDark ? "#1D4ED8" : "#BFDBFE",
+            },
+          ]}
+        >
           <Ionicons name="mail-outline" size={24} color="#2563EB" />
           <View style={styles.contactText}>
-            <Text style={styles.contactTitle}>Still need help?</Text>
-            <Text style={styles.contactSubtitle}>
+            <Text
+              style={[
+                styles.contactTitle,
+                { color: isDark ? "#93C5FD" : "#1E40AF" },
+              ]}
+            >
+              Still need help?
+            </Text>
+            <Text style={[styles.contactSubtitle, { color: "#3B82F6" }]}>
               Email us at support@civicconnect.app
             </Text>
           </View>
@@ -154,7 +193,7 @@ export default function HelpCenterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -162,13 +201,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -176,7 +213,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  headerTitle: { fontSize: 17, fontWeight: "700", color: "#111827" },
+  headerTitle: { fontSize: 17, fontWeight: "700" },
   scrollContent: { padding: 20, paddingBottom: 40 },
   hero: { alignItems: "center", marginBottom: 28 },
   heroIconBox: {
@@ -188,31 +225,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 14,
   },
-  heroTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 6,
-  },
-  heroSubtitle: {
-    fontSize: 14,
-    color: "#6B7280",
-    textAlign: "center",
-    lineHeight: 20,
-  },
+  heroTitle: { fontSize: 22, fontWeight: "700", marginBottom: 6 },
+  heroSubtitle: { fontSize: 14, textAlign: "center", lineHeight: 20 },
   sectionHeader: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#9CA3AF",
     marginBottom: 10,
     marginLeft: 5,
     letterSpacing: 1,
   },
   faqCard: {
-    backgroundColor: "#FFF",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#F3F4F6",
     marginBottom: 20,
     overflow: "hidden",
     shadowColor: "#000",
@@ -229,34 +253,21 @@ const styles = StyleSheet.create({
   faqQuestion: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#111827",
     flex: 1,
     marginRight: 10,
     lineHeight: 20,
   },
-  faqAnswer: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginTop: 10,
-    lineHeight: 20,
-  },
-  divider: { height: 1, backgroundColor: "#F3F4F6", marginHorizontal: 16 },
+  faqAnswer: { fontSize: 13, marginTop: 10, lineHeight: 20 },
+  divider: { height: 1, marginHorizontal: 16 },
   contactCard: {
-    backgroundColor: "#EFF6FF",
     borderRadius: 12,
     padding: 16,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
     borderWidth: 1,
-    borderColor: "#BFDBFE",
   },
   contactText: { flex: 1 },
-  contactTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#1E40AF",
-    marginBottom: 2,
-  },
-  contactSubtitle: { fontSize: 13, color: "#3B82F6" },
+  contactTitle: { fontSize: 15, fontWeight: "600", marginBottom: 2 },
+  contactSubtitle: { fontSize: 13 },
 });
