@@ -110,26 +110,25 @@
 - src/components/IssueCard.tsx
 - src/components/StatCard.tsx
 - src/navigation/AppNavigator.tsx
-- src/screens/AboutScreen.tsx
-- src/screens/AdminDashboardScreen.tsx
-- src/screens/CivicDataInsightsScreen.tsx
-- src/screens/ContactSupportScreen.tsx
-- src/screens/HomeScreen.tsx
-- src/screens/IssueDetailScreen.tsx
+- src/screens/HelpCenterScreen.tsx
 - src/screens/IssuesScreen.tsx
 - src/screens/LandingPage.tsx
 - src/screens/LoginPage.tsx
 - src/screens/MyReportsScreen.tsx
 - src/screens/PersonalInfoScreen.tsx
+- src/screens/PrivacyPolicyScreen.tsx
+- src/screens/PrivacySecurityScreen.tsx
 - src/screens/ProfileScreen.tsx
 - src/screens/ReportIssueScreen.tsx
 - src/screens/SignupPage.tsx
 - src/screens/SplashScreen.tsx
+- src/screens/TermsOfServiceScreen.tsx
+- src/components/IssueCard.tsx
+- src/components/StatCard.tsx
 - src/styles/colors.ts
 - src/styles/theme.ts
 - src/types.ts
 - src/utils/stats.ts
-- TODO.md
 
 ### CivicReport/
 
@@ -156,7 +155,7 @@
 - src/react-app/components/IssueCard.tsx
 - src/react-app/components/StatCard.tsx
 - src/react-app/components/layout/MobileLayout.tsx
-- src/react-app/components/ui/ (all primitives: accordion.tsx, alert-dialog.tsx, avatar.tsx, badge.tsx, button.tsx, card.tsx, checkbox.tsx, collapsible.tsx, dialog.tsx, dropdown-menu.tsx, field.tsx, input-group.tsx, input.tsx, label.tsx, popover.tsx, progress.tsx, radio-group.tsx, scroll-area.tsx, select.tsx)
+  src/react-app/components/ui/ (expanded primitives: accordion.tsx, alert-dialog.tsx, avatar.tsx, badge.tsx, button.tsx, card.tsx, checkbox.tsx, collapsible.tsx, dialog.tsx, dropdown-menu.tsx, field.tsx, input-group.tsx, input.tsx, label.tsx, popover.tsx, progress.tsx, radio-group.tsx, scroll-area.tsx, select.tsx, separator.tsx, skeleton.tsx, slider.tsx, switch.tsx, table.tsx, tabs.tsx, textarea.tsx, tooltip.tsx)
 - src/react-app/data/issues.ts
 - src/react-app/lib/utils.ts
 - src/react-app/pages/Home.tsx
@@ -203,12 +202,11 @@ Heavy emphasis on CivicConnectApp screens (AdminDashboardScreen, HomeScreen, Iss
 
 ### TODO Progress
 
-- **civic-backend/TODO.md**: Issue creation null-safety ✅; rebuild/test pending ⏳
-- **admin-web/TODO.md**: Pinterest UI redesign complete ✅
-- **My new app/TODO.md**: Cleanup/rename complete ✅; issue.id fixes in AdminDashboard ✅
-- **Root TODO.md**: Frontend ID fixes (issue.issueId → issue.id) in progress ⏳
-- **CivicReport/docs/todo.md**: Maps/animations pending ⏳
-- **CivicConnectApp/TODO.md**: Various screens/components updated.
+- **Root TODO.md**: PROJECT_CONTEXT.md update ✅
+- **civic-backend/TODO.md**: Issue creation null-safety ✅; rebuild/test/stability pending (frequent JVM crashes: hs_err_pid\*.log) ⏳
+- **admin-web/TODO.md**: Pinterest UI redesign ✅
+- **My new app/TODO.md**: Cleanup/rename complete ✅
+- **CivicReport/docs/todo.md**: Maps/animations/image upload ⏳
 
 ### Recent/Updated Code Highlights (Till Date)
 

@@ -4,6 +4,8 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Home, Flag, Plus, User } from "lucide-react-native";
+import { colors } from "../styles/colors";
+import { useTheme } from "../context/ThemeContext";
 
 // ---------- Types ----------
 export type RootStackParamList = {
@@ -43,11 +45,15 @@ const ReportTabIcon = () => (
 
 // ---------- Bottom Tab Navigator ----------
 const MainTabs = () => {
+  const { colors } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          { backgroundColor: colors.tabBar, borderTopColor: colors.border },
+        ],
         tabBarActiveTintColor: "#1E3A8A",
         tabBarInactiveTintColor: "#94A3B8",
         tabBarLabelStyle: styles.tabLabel,

@@ -30,10 +30,11 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { fetchIssues, type Issue } from "../api/issues";
 import { RootStackParamList } from "../navigation/AppNavigator";
+import { useTheme } from "../context/ThemeContext";
 
 // ---------- Icon Components ----------
-const BellIcon = () => (
-  <View style={styles.bellIconWrapper}>
+const BellIcon = ({ cardBg }: { cardBg: string }) => (
+  <View style={[styles.bellIconWrapper]}>
     <Bell size={20} color="#000" />
     <View style={styles.bellDot} />
   </View>
@@ -73,38 +74,28 @@ const CheckCircleIcon = () => (
   </View>
 );
 
-const TrashIcon = () => (
-  <View style={[styles.issueIconBox, { backgroundColor: "#F1F5F9" }]}>
+const TrashIcon = ({ bg }: { bg: string }) => (
+  <View style={[styles.issueIconBox, { backgroundColor: bg }]}>
     <Trash2 size={18} color="#475569" />
   </View>
 );
 
-const WrenchIcon = () => (
-  <View style={[styles.issueIconBox, { backgroundColor: "#F1F5F9" }]}>
+const WrenchIcon = ({ bg }: { bg: string }) => (
+  <View style={[styles.issueIconBox, { backgroundColor: bg }]}>
     <Wrench size={18} color="#475569" />
   </View>
 );
 
-const DropletIcon = () => (
-  <View style={[styles.issueIconBox, { backgroundColor: "#F1F5F9" }]}>
+const DropletIcon = ({ bg }: { bg: string }) => (
+  <View style={[styles.issueIconBox, { backgroundColor: bg }]}>
     <Droplets size={18} color="#475569" />
   </View>
 );
 
-const InfoIcon = () => (
-  <View style={[styles.issueIconBox, { backgroundColor: "#EFF6FF" }]}>
+const InfoIcon = ({ bg }: { bg: string }) => (
+  <View style={[styles.issueIconBox, { backgroundColor: bg }]}>
     <Info size={18} color="#1D4ED8" />
   </View>
-);
-
-const LocationIcon = () => (
-  <MapPin size={12} color="#475569" style={styles.metaIcon as any} />
-);
-const ClockIcon = () => (
-  <Clock size={12} color="#475569" style={styles.metaIcon as any} />
-);
-const PeopleIcon = () => (
-  <Users size={12} color="#475569" style={styles.metaIcon as any} />
 );
 
 // ---------- Sub-components ----------
@@ -112,15 +103,21 @@ const StatCard = ({
   label,
   value,
   icon,
+  cardBg,
+  textColor,
+  labelColor,
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
+  cardBg: string;
+  textColor: string;
+  labelColor: string;
 }) => (
-  <View style={styles.statCard}>
+  <View style={[styles.statCard, { backgroundColor: cardBg }]}>
     <View>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
+      <Text style={[styles.statLabel, { color: labelColor }]}>{label}</Text>
+      <Text style={[styles.statValue, { color: textColor }]}>{value}</Text>
     </View>
     {icon}
   </View>
@@ -149,6 +146,10 @@ const IssueCard = ({
   date,
   count,
   accentColor,
+  cardBg,
+  titleColor,
+  metaColor,
+  categoryColor,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -158,29 +159,43 @@ const IssueCard = ({
   date: string;
   count: string;
   accentColor: string;
+  cardBg: string;
+  titleColor: string;
+  metaColor: string;
+  categoryColor: string;
 }) => (
-  <TouchableOpacity style={styles.issueCard} activeOpacity={0.8}>
+  <TouchableOpacity
+    style={[styles.issueCard, { backgroundColor: cardBg }]}
+    activeOpacity={0.8}
+  >
     <View style={[styles.issueAccent, { backgroundColor: accentColor }]} />
     <View style={styles.issueCardInner}>
       {icon}
       <View style={styles.issueContent}>
         <View style={styles.issueRow}>
-          <Text style={styles.issueTitle} numberOfLines={1}>
+          <Text
+            style={[styles.issueTitle, { color: titleColor }]}
+            numberOfLines={1}
+          >
             {title}
           </Text>
           <ArrowRight color="#CBD5E1" />
         </View>
         <View style={styles.issueMeta1}>
           <Badge label={badge} />
-          <Text style={styles.categoryText}>{category}</Text>
+          <Text style={[styles.categoryText, { color: categoryColor }]}>
+            {category}
+          </Text>
         </View>
         <View style={styles.issueMeta2}>
-          <LocationIcon />
-          <Text style={styles.metaText}>{location}</Text>
-          <ClockIcon />
-          <Text style={styles.metaText}>{date}</Text>
-          <PeopleIcon />
-          <Text style={styles.metaText}>{count}</Text>
+          <MapPin size={12} color={metaColor} />
+          <Text style={[styles.metaText, { color: metaColor }]}>
+            {location}
+          </Text>
+          <Clock size={12} color={metaColor} />
+          <Text style={[styles.metaText, { color: metaColor }]}>{date}</Text>
+          <Users size={12} color={metaColor} />
+          <Text style={[styles.metaText, { color: metaColor }]}>{count}</Text>
         </View>
       </View>
     </View>
@@ -188,27 +203,6 @@ const IssueCard = ({
 );
 
 // ---------- Main Screen ----------
-const getIssueIcon = (category: string): React.ReactNode => {
-  const cat = category.toLowerCase();
-  if (cat.includes("garbag") || cat.includes("waste")) return <TrashIcon />;
-  if (cat.includes("pothole"))
-    return (
-      <View style={[styles.issueIconBox, { backgroundColor: "#F1F5F9" }]}>
-        <MapPin size={18} color="#475569" />
-      </View>
-    );
-  if (cat.includes("streetlight") || cat.includes("lighting"))
-    return (
-      <View style={[styles.issueIconBox, { backgroundColor: "#F1F5F9" }]}>
-        <Info size={18} color="#475569" />
-      </View>
-    );
-  if (cat.includes("sewage") || cat.includes("drain")) return <WrenchIcon />;
-  if (cat.includes("water") || cat.includes("leak") || cat.includes("droplet"))
-    return <DropletIcon />;
-  return <InfoIcon />;
-};
-
 const getPriorityColor = (priority: string): string => {
   switch (priority) {
     case "High":
@@ -226,10 +220,39 @@ type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function CivicReportHome() {
   const navigation = useNavigation<NavigationProp>();
+  const { colors } = useTheme();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  const getIssueIcon = (category: string): React.ReactNode => {
+    const cat = category.toLowerCase();
+    const iconBg = colors.inputBg;
+    if (cat.includes("garbag") || cat.includes("waste"))
+      return <TrashIcon bg={iconBg} />;
+    if (cat.includes("pothole"))
+      return (
+        <View style={[styles.issueIconBox, { backgroundColor: iconBg }]}>
+          <MapPin size={18} color="#475569" />
+        </View>
+      );
+    if (cat.includes("streetlight") || cat.includes("lighting"))
+      return (
+        <View style={[styles.issueIconBox, { backgroundColor: iconBg }]}>
+          <Info size={18} color="#475569" />
+        </View>
+      );
+    if (cat.includes("sewage") || cat.includes("drain"))
+      return <WrenchIcon bg={iconBg} />;
+    if (
+      cat.includes("water") ||
+      cat.includes("leak") ||
+      cat.includes("droplet")
+    )
+      return <DropletIcon bg={iconBg} />;
+    return <InfoIcon bg={colors.accent} />;
+  };
 
   useEffect(() => {
     const loadIssues = async () => {
@@ -270,8 +293,13 @@ export default function CivicReportHome() {
   const resolved = issues.filter((i: Issue) => i.status === "Resolved").length;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#EFF4FB" />
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.sectionBg }]}
+    >
+      <StatusBar
+        barStyle={colors.statusBar}
+        backgroundColor={colors.sectionBg}
+      />
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -282,11 +310,18 @@ export default function CivicReportHome() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.welcomeText}>Welcome to</Text>
-            <Text style={styles.appName}>CivicReport</Text>
+            <Text style={[styles.welcomeText, { color: colors.textSecondary }]}>
+              Welcome to
+            </Text>
+            <Text style={[styles.appName, { color: colors.text }]}>
+              CivicReport
+            </Text>
           </View>
-          <TouchableOpacity style={styles.bellButton} activeOpacity={0.7}>
-            <BellIcon />
+          <TouchableOpacity
+            style={[styles.bellButton, { backgroundColor: colors.card }]}
+            activeOpacity={0.7}
+          >
+            <BellIcon cardBg={colors.card} />
           </TouchableOpacity>
         </View>
 
@@ -307,33 +342,49 @@ export default function CivicReportHome() {
         </TouchableOpacity>
 
         {/* Overview */}
-        <Text style={styles.sectionTitle}>OVERVIEW</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+          OVERVIEW
+        </Text>
         <View style={styles.statsGrid}>
           <StatCard
             label="TOTAL ISSUES"
             value={totalIssues.toString()}
             icon={<FileIcon color="#93C5FD" />}
+            cardBg={colors.card}
+            textColor={colors.text}
+            labelColor={colors.textMuted}
           />
           <StatCard
             label="HIGH PRIORITY"
             value={highPriority.toString()}
             icon={<AlertTriangleIcon />}
+            cardBg={colors.card}
+            textColor={colors.text}
+            labelColor={colors.textMuted}
           />
           <StatCard
             label="IN PROGRESS"
             value={pendingCount.toString()}
             icon={<FileOrangeIcon />}
+            cardBg={colors.card}
+            textColor={colors.text}
+            labelColor={colors.textMuted}
           />
           <StatCard
             label="RESOLVED"
             value={resolved.toString()}
             icon={<CheckCircleIcon />}
+            cardBg={colors.card}
+            textColor={colors.text}
+            labelColor={colors.textMuted}
           />
         </View>
 
         {/* Recent Issues */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>RECENT ISSUES</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            RECENT ISSUES
+          </Text>
           <TouchableOpacity
             style={styles.viewAllBtn}
             onPress={() =>
@@ -369,6 +420,10 @@ export default function CivicReportHome() {
                 }
                 count="N/A"
                 accentColor={getPriorityColor(issue.priority)}
+                cardBg={colors.card}
+                titleColor={colors.text}
+                metaColor={colors.textMuted}
+                categoryColor={colors.textSecondary}
               />
             )}
             keyExtractor={(item) => item.id.toString()}
@@ -380,11 +435,20 @@ export default function CivicReportHome() {
         )}
 
         {/* Help Card */}
-        <View style={styles.helpCard}>
-          <InfoIcon />
+        <View
+          style={[
+            styles.helpCard,
+            { backgroundColor: colors.accent, borderColor: colors.primary },
+          ]}
+        >
+          <InfoIcon bg={colors.accent} />
           <View style={styles.helpTextBox}>
-            <Text style={styles.helpTitle}>Need help?</Text>
-            <Text style={styles.helpSubtitle}>
+            <Text style={[styles.helpTitle, { color: colors.primary }]}>
+              Need help?
+            </Text>
+            <Text
+              style={[styles.helpSubtitle, { color: colors.textSecondary }]}
+            >
               For emergencies, please call 911. This app is for non-emergency
               civic issues only.
             </Text>
@@ -399,7 +463,7 @@ export default function CivicReportHome() {
 
 // ---------- Styles ----------
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#EFF4FB" },
+  safeArea: { flex: 1 },
   errorContainer: {
     padding: 16,
     backgroundColor: "#FEF2F2",
@@ -415,18 +479,12 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 20,
   },
-  welcomeText: { fontSize: 14, color: "#64748B", fontWeight: "400" },
-  appName: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#0F172A",
-    letterSpacing: -0.5,
-  },
+  welcomeText: { fontSize: 14, fontWeight: "400" },
+  appName: { fontSize: 24, fontWeight: "700", letterSpacing: -0.5 },
   bellButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -479,7 +537,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 1.2,
-    color: "#64748B",
     marginBottom: 12,
   },
   statsGrid: {
@@ -490,7 +547,6 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: "47%",
-    backgroundColor: "#FFFFFF",
     borderRadius: 14,
     padding: 16,
     flexDirection: "row",
@@ -504,11 +560,10 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 10,
     fontWeight: "600",
-    color: "#94A3B8",
     letterSpacing: 0.8,
     marginBottom: 6,
   },
-  statValue: { fontSize: 28, fontWeight: "700", color: "#0F172A" },
+  statValue: { fontSize: 28, fontWeight: "700" },
   statIconBox: {
     width: 40,
     height: 40,
@@ -525,7 +580,6 @@ const styles = StyleSheet.create({
   viewAllBtn: { flexDirection: "row", alignItems: "center" },
   viewAllText: { fontSize: 13, color: "#2563EB", fontWeight: "600" },
   issueCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 14,
     marginBottom: 10,
     flexDirection: "row",
@@ -561,13 +615,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 6,
   },
-  issueTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#0F172A",
-    flex: 1,
-    marginRight: 4,
-  },
+  issueTitle: { fontSize: 14, fontWeight: "600", flex: 1, marginRight: 4 },
   issueMeta1: {
     flexDirection: "row",
     alignItems: "center",
@@ -577,11 +625,10 @@ const styles = StyleSheet.create({
   issueMeta2: { flexDirection: "row", alignItems: "center", gap: 4 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   badgeText: { fontSize: 11, fontWeight: "600" },
-  categoryText: { fontSize: 12, color: "#64748B" },
+  categoryText: { fontSize: 12 },
   metaIcon: { fontSize: 11 },
-  metaText: { fontSize: 11, color: "#94A3B8", marginRight: 6 },
+  metaText: { fontSize: 11, marginRight: 6 },
   helpCard: {
-    backgroundColor: "#EFF6FF",
     borderRadius: 14,
     padding: 16,
     flexDirection: "row",
@@ -590,14 +637,8 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "#BFDBFE",
   },
   helpTextBox: { flex: 1 },
-  helpTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#1E3A8A",
-    marginBottom: 4,
-  },
-  helpSubtitle: { fontSize: 12, color: "#475569", lineHeight: 17 },
+  helpTitle: { fontSize: 14, fontWeight: "700", marginBottom: 4 },
+  helpSubtitle: { fontSize: 12, lineHeight: 17 },
 });

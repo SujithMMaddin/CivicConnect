@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { supabase } from "../api/supabase";
+import { useTheme } from "../context/ThemeContext";
 import { fetchIssues, type Issue } from "../api/issues";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -28,12 +29,21 @@ const StatCard = ({
   label,
   value,
   color,
+  cardBg,
+  cardBorder,
 }: {
   label: string;
   value: string;
   color: string;
+  cardBg: string;
+  cardBorder: string;
 }) => (
-  <View style={styles.statCard}>
+  <View
+    style={[
+      styles.statCard,
+      { backgroundColor: cardBg, borderColor: cardBorder },
+    ]}
+  >
     <Text style={[styles.statValue, { color }]}>{value}</Text>
     <Text style={styles.statLabel}>{label}</Text>
   </View>
@@ -49,48 +59,66 @@ const SettingsItem = ({
   onSwitchChange,
   isLast,
   destructive,
-}: any) => (
-  <TouchableOpacity
-    style={[styles.settingsItem, isLast && { borderBottomWidth: 0 }]}
-    onPress={onPress}
-    disabled={showSwitch}
-    activeOpacity={0.7}
-  >
-    <View
+}: any) => {
+  const { colors } = useTheme();
+  return (
+    <TouchableOpacity
       style={[
-        styles.iconContainer,
-        destructive && { backgroundColor: "#FEE2E2" },
+        styles.settingsItem,
+        isLast && { borderBottomWidth: 0 },
+        { borderBottomColor: colors.border },
       ]}
+      onPress={onPress}
+      disabled={showSwitch}
+      activeOpacity={0.7}
     >
-      <Ionicons
-        name={icon}
-        size={20}
-        color={destructive ? "#EF4444" : "#4B5563"}
-      />
-    </View>
-    <View style={styles.settingsTextContainer}>
-      <Text style={[styles.settingsTitle, destructive && { color: "#EF4444" }]}>
-        {title}
-      </Text>
-      {subtitle && <Text style={styles.settingsSubtitle}>{subtitle}</Text>}
-    </View>
-    {showSwitch ? (
-      <Switch
-        value={switchValue}
-        onValueChange={onSwitchChange}
-        trackColor={{ false: "#E5E7EB", true: "#2563EB" }}
-      />
-    ) : (
-      <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-    )}
-  </TouchableOpacity>
-);
+      <View
+        style={[
+          styles.iconContainer,
+          destructive && { backgroundColor: "#FEE2E2" },
+          { backgroundColor: destructive ? "#FEE2E2" : colors.inputBg },
+        ]}
+      >
+        <Ionicons
+          name={icon}
+          size={20}
+          color={destructive ? "#EF4444" : colors.textSecondary}
+        />
+      </View>
+      <View style={styles.settingsTextContainer}>
+        <Text
+          style={[
+            styles.settingsTitle,
+            { color: destructive ? "#EF4444" : colors.text },
+          ]}
+        >
+          {title}
+        </Text>
+        {subtitle && (
+          <Text style={[styles.settingsSubtitle, { color: colors.textMuted }]}>
+            {subtitle}
+          </Text>
+        )}
+      </View>
+      {showSwitch ? (
+        <Switch
+          value={switchValue}
+          onValueChange={onSwitchChange}
+          trackColor={{ false: "#E5E7EB", true: "#2563EB" }}
+        />
+      ) : (
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      )}
+    </TouchableOpacity>
+  );
+};
 
 // --- Main Screen ---
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>();
+
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDark, toggleTheme, colors } = useTheme();
   const [user, setUser] = useState<any>(null);
   const [myIssues, setMyIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,8 +188,13 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      <StatusBar
+        barStyle={colors.statusBar}
+        backgroundColor={colors.background}
+      />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -172,11 +205,15 @@ export default function ProfileScreen() {
             <Ionicons name="person-outline" size={40} color="#2563EB" />
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>
+            <Text style={[styles.userName, { color: colors.text }]}>
               {user?.user_metadata?.full_name || "Civic User"}
             </Text>
-            <Text style={styles.userEmail}>{user?.email || "No email"}</Text>
-            <Text style={styles.userRole}>Community Member</Text>
+            <Text style={[styles.userEmail, { color: colors.textSecondary }]}>
+              {user?.email || "No email"}
+            </Text>
+            <Text style={[styles.userRole, { color: colors.textSecondary }]}>
+              Community Member
+            </Text>
           </View>
         </View>
 
@@ -186,22 +223,33 @@ export default function ProfileScreen() {
             label="Reported"
             value={totalReports.toString()}
             color="#111827"
+            cardBg={colors.card}
+            cardBorder={colors.border}
           />
           <StatCard
             label="Resolved"
             value={resolvedReports.toString()}
             color="#10B981"
+            cardBg={colors.card}
+            cardBorder={colors.border}
           />
           <StatCard
             label="Pending"
             value={pendingReports.toString()}
             color="#F59E0B"
+            cardBg={colors.card}
+            cardBorder={colors.border}
           />
         </View>
 
         {/* Account Section */}
         <Text style={styles.sectionHeader}>ACCOUNT</Text>
-        <View style={styles.sectionCard}>
+        <View
+          style={[
+            styles.sectionCard,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <SettingsItem
             icon="person-outline"
             title="Personal Information"
@@ -225,7 +273,12 @@ export default function ProfileScreen() {
 
         {/* Preferences Section */}
         <Text style={styles.sectionHeader}>PREFERENCES</Text>
-        <View style={styles.sectionCard}>
+        <View
+          style={[
+            styles.sectionCard,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <SettingsItem
             icon="notifications-outline"
             title="Notifications"
@@ -245,8 +298,8 @@ export default function ProfileScreen() {
             title="Dark Mode"
             subtitle="Toggle dark theme"
             showSwitch
-            switchValue={darkMode}
-            onSwitchChange={setDarkMode}
+            switchValue={isDark}
+            onSwitchChange={toggleTheme}
           />
           <SettingsItem
             icon="settings-outline"
@@ -258,7 +311,12 @@ export default function ProfileScreen() {
 
         {/* Support Section */}
         <Text style={styles.sectionHeader}>SUPPORT</Text>
-        <View style={styles.sectionCard}>
+        <View
+          style={[
+            styles.sectionCard,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <SettingsItem
             icon="help-circle-outline"
             title="Help Center"
@@ -279,7 +337,16 @@ export default function ProfileScreen() {
         </View>
 
         {/* Sign Out */}
-        <View style={[styles.sectionCard, { marginTop: 10 }]}>
+        <View
+          style={[
+            styles.sectionCard,
+            {
+              marginTop: 10,
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            },
+          ]}
+        >
           <SettingsItem
             icon="log-out-outline"
             title="Sign Out"
