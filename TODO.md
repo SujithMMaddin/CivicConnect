@@ -1,13 +1,20 @@
-# Project Task Tracking - Civic Reporting System
+# Loading Performance Fix TODO
 
-## Current Task: Update PROJECT_CONTEXT.md based on recent changes
+## Plan Steps (React Native CivicConnectApp)
 
-### Steps (from approved plan):
+- [ ] **Step 1**: Create project-level TODO.md ✅ **(Current step)**
+- [x] **Step 2**: Edit `CivicConnectApp/src/screens/LandingPage.tsx` ✅
+  - Conditional `setLoading(true)` in `loadIssues`
+  - `fetchIssues(true)` in `onRefresh`
+- [x] **Step 3**: Edit `CivicConnectApp/src/screens/MyReportsScreen.tsx` ✅
+  - Conditional `if (issues.length === 0) setLoading(true);` in `useFocusEffect`
+- [x] **Step 4**: Edit `CivicConnectApp/src/screens/ProfileScreen.tsx` ✅
+  - Conditional `if (myIssues.length === 0) setLoading(true);` in `useFocusEffect`
+- [x] **Step 5**: Edit `CivicConnectApp/src/screens/IssuesScreen.tsx` ✅
+  - Add conditional `setLoading(true)` in `loadIssues`
+  - `fetchIssues(true)` in `onRefresh`
+- [ ] **Step 6**: Verify no linter errors
+- [ ] **Step 7**: Test with `cd CivicConnectApp && npx expo start --clear`
+- [ ] **Step 8**: Update TODO.md as completed and attempt_completion
 
-- [x] 1. Gather info from TODO files and PROJECT_CONTEXT.md
-- [x] 2. Confirm edit plan with user
-- [x] 3. Create this TODO.md for tracking
-- [x] 4. Edit PROJECT_CONTEXT.md with updates (TODO progress, recent work)
-- [x] 5. Verify update and attempt_completion
-
-**Note**: Progress tracked here. Updates marked on completion.
+**Next**: Proceed to Step 2 after confirmation.

@@ -40,7 +40,7 @@ export default function MyReportsScreen() {
   useFocusEffect(
     useCallback(() => {
       const load = async () => {
-        setLoading(true);
+        if (issues.length === 0) setLoading(true);
         try {
           const {
             data: { user },

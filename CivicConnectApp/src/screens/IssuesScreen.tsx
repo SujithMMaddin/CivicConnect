@@ -272,6 +272,7 @@ const IssuesScreen = () => {
   const [error, setError] = useState<string | null>(null);
 
   const loadIssues = async () => {
+    if (issues.length === 0) setLoading(true);
     setError(null);
     try {
       const data = await fetchIssues();
@@ -290,7 +291,8 @@ const IssuesScreen = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadIssues();
+    const data = await fetchIssues(true);
+    setIssues(data);
     setRefreshing(false);
   };
 

@@ -256,10 +256,10 @@ export default function CivicReportHome() {
 
   useEffect(() => {
     const loadIssues = async () => {
-      setLoading(true);
+      if (issues.length === 0) setLoading(true);
       setError(null);
       try {
-        const data = await fetchIssues();
+        const data = await fetchIssues(true);
         setIssues(data);
       } catch (err: any) {
         console.error("Failed to fetch issues:", err);

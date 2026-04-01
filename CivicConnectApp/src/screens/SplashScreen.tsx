@@ -9,6 +9,7 @@ import {
   StatusBar,
 } from "react-native";
 import { Video, ResizeMode } from "expo-av";
+import { supabase } from "../api/supabase";
 
 const { width } = Dimensions.get("window");
 
@@ -17,7 +18,7 @@ export default function SplashScreen() {
   const navigation = useNavigation<any>();
 
   useEffect(() => {
-    // Fade in the text/footer after video starts
+    // Fade in animation
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 800,
@@ -25,10 +26,22 @@ export default function SplashScreen() {
       useNativeDriver: true,
     }).start();
 
-    // Navigate after animation completes
-    const timer = setTimeout(() => {
-      navigation.replace("Login");
+    // Check session and navigate
+    const timer = setTimeout(async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session) {
+          navigation.replace("MainTabs"); // already logged in
+        } else {
+          navigation.replace("Login"); // not logged in
+        }
+      } catch (err) {
+        navigation.replace("Login"); // on error go to login
+      }
     }, 3500);
+
     return () => clearTimeout(timer);
   }, []);
 

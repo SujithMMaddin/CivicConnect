@@ -126,7 +126,7 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       const loadData = async () => {
-        setLoading(true);
+        if (myIssues.length === 0) setLoading(true);
         try {
           const {
             data: { user },

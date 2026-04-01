@@ -45,7 +45,7 @@ const ReportTabIcon = () => (
 
 // ---------- Bottom Tab Navigator ----------
 const MainTabs = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -54,7 +54,7 @@ const MainTabs = () => {
           styles.tabBar,
           { backgroundColor: colors.tabBar, borderTopColor: colors.border },
         ],
-        tabBarActiveTintColor: "#1E3A8A",
+        tabBarActiveTintColor: isDark ? "#FFFFFF" : "#1E3A8A",
         tabBarInactiveTintColor: "#94A3B8",
         tabBarLabelStyle: styles.tabLabel,
       }}

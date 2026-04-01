@@ -1,12 +1,12 @@
 import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
+import * as LocalAuthentication from "expo-local-authentication";
 import { supabase } from "../api/supabase";
 import { Alert } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import * as AuthSession from "expo-auth-session";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   View,
   Text,
@@ -19,52 +19,46 @@ import {
   ScrollView,
 } from "react-native";
 import { Image } from "react-native";
-import { Svg, Path, Ellipse } from "react-native-svg"; // <-- Use SVG for lines
+import { Svg, Path, Ellipse } from "react-native-svg";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
-// Simple component for background curves and dotted lines
 WebBrowser.maybeCompleteAuthSession();
-const BackgroundGraphics = () => {
-  return (
-    <View style={StyleSheet.absoluteFill}>
-      <Svg height="100%" width="100%">
-        {/* Solid large curve at the top */}
-        <Path
-          d="M 10 100 Q 150 50 300 250"
-          stroke="#CED4DA"
-          strokeWidth="0.5"
-          fill="none"
-        />
-        {/* Dotted curve in upper right */}
-        <Path
-          d="M 280 80 Q 320 200 400 120"
-          stroke="#ADB5BD"
-          strokeWidth="1"
-          strokeDasharray="3, 3" // This creates the dots
-          fill="none"
-        />
-        {/* Small ellipse/circle in lower bottom */}
-        <Ellipse
-          cx="30"
-          cy="90%"
-          rx="100"
-          ry="150"
-          stroke="#E0E0E0"
-          strokeWidth="1"
-          fill="none"
-        />
-        {/* Dotted diagonal in the footer */}
-        <Path
-          d="M 0 780 L 100 880"
-          stroke="#ADB5BD"
-          strokeWidth="1"
-          strokeDasharray="5, 5"
-          fill="none"
-        />
-      </Svg>
-    </View>
-  );
-};
+
+const BackgroundGraphics = () => (
+  <View style={StyleSheet.absoluteFill}>
+    <Svg height="100%" width="100%">
+      <Path
+        d="M 10 100 Q 150 50 300 250"
+        stroke="#CED4DA"
+        strokeWidth="0.5"
+        fill="none"
+      />
+      <Path
+        d="M 280 80 Q 320 200 400 120"
+        stroke="#ADB5BD"
+        strokeWidth="1"
+        strokeDasharray="3, 3"
+        fill="none"
+      />
+      <Ellipse
+        cx="30"
+        cy="90%"
+        rx="100"
+        ry="150"
+        stroke="#E0E0E0"
+        strokeWidth="1"
+        fill="none"
+      />
+      <Path
+        d="M 0 780 L 100 880"
+        stroke="#ADB5BD"
+        strokeWidth="1"
+        strokeDasharray="5, 5"
+        fill="none"
+      />
+    </Svg>
+  </View>
+);
 
 export default function LoginScreen() {
   type NavigationProp = StackNavigationProp<RootStackParamList>;
@@ -72,36 +66,82 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricType, setBiometricType] = useState<string>("Biometric");
 
-  const handleGoogleSignIn = async () => {
-    console.log("Google button tapped");
+  // Check if biometric is available on this device
+  useEffect(() => {
+    const checkBiometric = async () => {
+      try {
+        const compatible = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = await LocalAuthentication.isEnrolledAsync();
+
+        if (compatible && enrolled) {
+          setBiometricAvailable(true);
+          // Get the type of biometric
+          const types =
+            await LocalAuthentication.supportedAuthenticationTypesAsync();
+          if (
+            types.includes(
+              LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION,
+            )
+          ) {
+            setBiometricType("Face ID");
+          } else if (
+            types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)
+          ) {
+            setBiometricType("Fingerprint");
+          }
+        }
+      } catch (err) {
+        console.error("Biometric check error:", err);
+      }
+    };
+    checkBiometric();
+  }, []);
+
+  const handleBiometricSignIn = async () => {
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: "civicconnect://auth/callback",
-          skipBrowserRedirect: false,
-        },
-      });
-      console.log("Supabase data:", JSON.stringify(data));
-      console.log("Supabase error:", JSON.stringify(error));
-      if (error) {
-        Alert.alert("Google Sign In Failed", error.message);
+      // Check if we have saved credentials
+      const savedEmail = await AsyncStorage.getItem("user_email");
+      const savedPassword = await AsyncStorage.getItem("user_password");
+
+      if (!savedEmail || !savedPassword) {
+        Alert.alert(
+          "Biometric Login",
+          "Please sign in with email and password first to enable biometric login.",
+        );
         return;
       }
-      if (data?.url) {
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          "civicconnect://auth/callback",
-        );
-        console.log("Browser result:", JSON.stringify(result));
-        if (result.type === "success") {
-          navigation.navigate("MainTabs");
+
+      // Authenticate with biometric
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: `Sign in to CivicConnect with ${biometricType}`,
+        cancelLabel: "Use Password",
+        disableDeviceFallback: false,
+      });
+
+      if (result.success) {
+        // Use saved credentials to sign in
+        const { error } = await supabase.auth.signInWithPassword({
+          email: savedEmail,
+          password: savedPassword,
+        });
+        if (error) {
+          Alert.alert(
+            "Login Failed",
+            "Biometric login failed. Please use your password.",
+          );
+          return;
         }
+        navigation.navigate("MainTabs");
       }
     } catch (err) {
-      console.error("Google Sign In error:", err);
-      Alert.alert("Error", "Google Sign In failed. Please try again.");
+      console.error("Biometric sign in error:", err);
+      Alert.alert(
+        "Error",
+        "Biometric authentication failed. Please try again.",
+      );
     }
   };
 
@@ -119,9 +159,43 @@ export default function LoginScreen() {
         Alert.alert("Login Failed", error.message);
         return;
       }
+
+      // Save credentials for biometric login
+      if (biometricAvailable) {
+        await AsyncStorage.setItem("user_email", email);
+        await AsyncStorage.setItem("user_password", password);
+      }
+
       navigation.navigate("MainTabs");
     } catch (err) {
       Alert.alert("Error", "Something went wrong. Please try again.");
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "civicconnect://auth/callback",
+          skipBrowserRedirect: false,
+        },
+      });
+      if (error) {
+        Alert.alert("Google Sign In Failed", error.message);
+        return;
+      }
+      if (data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          "civicconnect://auth/callback",
+        );
+        if (result.type === "success") {
+          navigation.navigate("MainTabs");
+        }
+      }
+    } catch (err) {
+      Alert.alert("Error", "Google Sign In failed. Please try again.");
     }
   };
 
@@ -221,19 +295,34 @@ export default function LoginScreen() {
 
             {/* Social Logins */}
             <View style={styles.socialContainer}>
-              <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="finger-print" size={24} color="#2563EB" />
-              </TouchableOpacity>
+              {/* Biometric button — only show if device supports it */}
+              {biometricAvailable && (
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  onPress={handleBiometricSignIn}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name={biometricType === "Face ID" ? "scan" : "finger-print"}
+                    size={24}
+                    color="#2563EB"
+                  />
+                  <Text style={styles.socialBtnLabel}>{biometricType}</Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Google button */}
               <TouchableOpacity
                 style={styles.socialButton}
                 onPress={handleGoogleSignIn}
+                activeOpacity={0.8}
               >
-                {/* Note: In production you might want an official Google SVG icon */}
                 <MaterialCommunityIcons
                   name="google"
                   size={24}
                   color="#4B5563"
                 />
+                <Text style={styles.socialBtnLabel}>Google</Text>
               </TouchableOpacity>
             </View>
 
@@ -264,34 +353,12 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  logoIcon: {
-    width: 28,
-    height: 28,
-    resizeMode: "contain",
-    marginRight: 6,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: "#F4F7FB",
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
-  keyboardView: {
-    flex: 1,
-    justifyContent: "space-between",
-    paddingBottom: 20,
-  },
-  headerContainer: {
-    alignItems: "center",
-    marginTop: 30,
-    marginBottom: 15,
-  },
-  logoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+  logoIcon: { width: 28, height: 28, resizeMode: "contain", marginRight: 6 },
+  container: { flex: 1, backgroundColor: "#F4F7FB" },
+  scrollContainer: { flexGrow: 1, justifyContent: "center" },
+  keyboardView: { flex: 1, justifyContent: "space-between", paddingBottom: 20 },
+  headerContainer: { alignItems: "center", marginTop: 30, marginBottom: 15 },
+  logoRow: { flexDirection: "row", alignItems: "center" },
   logoTitle: {
     fontSize: 24,
     fontWeight: "bold",
@@ -314,7 +381,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 15,
-    elevation: 4, // for android shadow
+    elevation: 4,
   },
   title: {
     fontSize: 28,
@@ -346,26 +413,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     height: 48,
   },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    color: "#111827",
-    fontSize: 15,
-  },
-  eyeIcon: {
-    padding: 4,
-  },
+  inputIcon: { marginRight: 10 },
+  input: { flex: 1, color: "#111827", fontSize: 15 },
+  eyeIcon: { padding: 4 },
   forgotPasswordContainer: {
     alignSelf: "flex-end",
     marginBottom: 22,
     marginTop: -8,
   },
-  forgotPasswordText: {
-    fontSize: 12,
-    color: "#4B5563",
-  },
+  forgotPasswordText: { fontSize: 12, color: "#4B5563" },
   signInButton: {
     backgroundColor: "#3B82F6",
     borderRadius: 24,
@@ -374,21 +430,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 28,
   },
-  signInButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  signInButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#E5E7EB",
-  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#E5E7EB" },
   dividerText: {
     marginHorizontal: 12,
     fontSize: 11,
@@ -397,50 +445,35 @@ const styles = StyleSheet.create({
   },
   socialContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    gap: 16,
     marginBottom: 28,
     paddingHorizontal: 10,
   },
   socialButton: {
     backgroundColor: "#F3F4F6",
     padding: 12,
-    borderRadius: 8,
-    width: "30%",
+    borderRadius: 12,
+    width: "40%",
     alignItems: "center",
     justifyContent: "center",
+    gap: 4,
   },
+  socialBtnLabel: { fontSize: 11, fontWeight: "600", color: "#4B5563" },
   signUpContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
   },
-  signUpText: {
-    fontSize: 14,
-    color: "#4B5563",
-  },
-  signUpLink: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1D4ED8",
-  },
-  footer: {
-    marginTop: 20,
-    alignItems: "center",
-  },
+  signUpText: { fontSize: 14, color: "#4B5563" },
+  signUpLink: { fontSize: 14, fontWeight: "600", color: "#1D4ED8" },
+  footer: { marginTop: 20, alignItems: "center" },
   footerLinksRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 10,
     width: "80%",
   },
-  footerLink: {
-    fontSize: 10,
-    color: "#6B7280",
-    letterSpacing: 0.8,
-  },
-  footerCopyright: {
-    fontSize: 10,
-    color: "#9CA3AF",
-    letterSpacing: 0.5,
-  },
+  footerLink: { fontSize: 10, color: "#6B7280", letterSpacing: 0.8 },
+  footerCopyright: { fontSize: 10, color: "#9CA3AF", letterSpacing: 0.5 },
 });
