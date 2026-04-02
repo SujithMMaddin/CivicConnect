@@ -1,4 +1,3 @@
-import * as WebBrowser from "expo-web-browser";
 import * as LocalAuthentication from "expo-local-authentication";
 import { supabase } from "../api/supabase";
 import { Alert } from "react-native";
@@ -20,9 +19,7 @@ import {
 } from "react-native";
 import { Image } from "react-native";
 import { Svg, Path, Ellipse } from "react-native-svg";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-
-WebBrowser.maybeCompleteAuthSession();
+import { Ionicons } from "@expo/vector-icons";
 
 const BackgroundGraphics = () => (
   <View style={StyleSheet.absoluteFill}>
@@ -172,33 +169,6 @@ export default function LoginScreen() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: "civicconnect://auth/callback",
-          skipBrowserRedirect: false,
-        },
-      });
-      if (error) {
-        Alert.alert("Google Sign In Failed", error.message);
-        return;
-      }
-      if (data?.url) {
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          "civicconnect://auth/callback",
-        );
-        if (result.type === "success") {
-          navigation.navigate("MainTabs");
-        }
-      }
-    } catch (err) {
-      Alert.alert("Error", "Google Sign In failed. Please try again.");
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <BackgroundGraphics />
@@ -298,7 +268,7 @@ export default function LoginScreen() {
               {/* Biometric button — only show if device supports it */}
               {biometricAvailable && (
                 <TouchableOpacity
-                  style={styles.socialButton}
+                  style={[styles.socialButton, { width: "60%" }]}
                   onPress={handleBiometricSignIn}
                   activeOpacity={0.8}
                 >
@@ -310,20 +280,6 @@ export default function LoginScreen() {
                   <Text style={styles.socialBtnLabel}>{biometricType}</Text>
                 </TouchableOpacity>
               )}
-
-              {/* Google button */}
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={handleGoogleSignIn}
-                activeOpacity={0.8}
-              >
-                <MaterialCommunityIcons
-                  name="google"
-                  size={24}
-                  color="#4B5563"
-                />
-                <Text style={styles.socialBtnLabel}>Google</Text>
-              </TouchableOpacity>
             </View>
 
             {/* Sign Up Link */}
