@@ -17,22 +17,8 @@ import {
   List,
   User,
   Users,
-  ChevronDown,
 } from "lucide-react";
 import { Issue, fetchIssues, updateIssueStatus } from "@/shared/api";
-import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
 
 // ---------- Constants ----------
 const CATEGORIES = [
@@ -69,11 +55,13 @@ const CHART_COLORS = [
   "#F97316",
   "#6B7280",
 ];
+
 const STATUS_COLORS: Record<string, string> = {
   Pending: "#F59E0B",
   "In Progress": "#3B82F6",
   Resolved: "#10B981",
 };
+
 const PRIORITY_COLORS: Record<string, string> = {
   High: "#EF4444",
   Medium: "#F97316",
@@ -146,6 +134,226 @@ function formatDate(dateString: string): string {
   });
 }
 
+// ---------- Issue Detail Modal ----------
+function IssueDetailModal({
+  issue,
+  onClose,
+}: {
+  issue: Issue | null;
+  onClose: () => void;
+}) {
+  if (!issue) return null;
+
+  const reportCount = (issue as any).reportCount || 1;
+  const userId = (issue as any).userId;
+  const assignedDept = (issue as any).assignedDepartment || "Not assigned";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto z-10">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">
+              Issue #{issue.id}
+            </h2>
+            <p className="text-sm text-slate-500">{issue.category}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors text-sm font-bold"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Status + Priority + Report count */}
+          <div className="flex flex-wrap gap-2">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPriorityColor(issue.priority)}`}
+            >
+              {issue.priority} Priority
+            </span>
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                issue.status === "Resolved"
+                  ? "bg-green-100 text-green-700"
+                  : issue.status === "In Progress"
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-amber-100 text-amber-700"
+              }`}
+            >
+              {issue.status}
+            </span>
+            {reportCount > 1 && (
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">
+                {reportCount} reports
+              </span>
+            )}
+          </div>
+
+          {/* Description */}
+          <div className="bg-slate-50 rounded-xl p-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
+              Description
+            </p>
+            <p className="text-sm text-slate-700 leading-relaxed">
+              {issue.description}
+            </p>
+          </div>
+
+          {/* Reporter Info */}
+          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+            <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-3 flex items-center gap-1">
+              <User className="w-3 h-3" /> Reporter Information
+            </p>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">User ID</span>
+                <span className="text-xs font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 max-w-[200px] truncate">
+                  {userId ? userId : "Anonymous"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Name</span>
+                <span className="text-xs font-medium text-slate-700">
+                  {(issue as any).userName || "Not available"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Email</span>
+                <span className="text-xs font-medium text-slate-700">
+                  {(issue as any).userEmail || "Not available"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Location */}
+          <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+            <p className="text-xs font-semibold text-green-500 uppercase tracking-wide mb-3 flex items-center gap-1">
+              <MapPin className="w-3 h-3" /> Location Details
+            </p>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Latitude</span>
+                <span className="text-xs font-mono text-slate-700">
+                  {issue.latitude?.toFixed(6)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Longitude</span>
+                <span className="text-xs font-mono text-slate-700">
+                  {issue.longitude?.toFixed(6)}
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-xs text-slate-500 flex-shrink-0">
+                  Address
+                </span>
+                <span className="text-xs text-slate-700 text-right">
+                  {(issue as any).address ||
+                    `Lat: ${issue.latitude?.toFixed(4)}, Lng: ${issue.longitude?.toFixed(4)}`}
+                </span>
+              </div>
+              <a
+                href={`https://www.openstreetmap.org/?mlat=${issue.latitude}&mlon=${issue.longitude}&zoom=16`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mt-1 font-medium"
+              >
+                <Map className="w-3 h-3" /> View on OpenStreetMap →
+              </a>
+            </div>
+          </div>
+
+          {/* Date & Time */}
+          <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+            <p className="text-xs font-semibold text-purple-400 uppercase tracking-wide mb-3 flex items-center gap-1">
+              <Calendar className="w-3 h-3" /> Date & Time
+            </p>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Reported On</span>
+                <span className="text-xs font-medium text-slate-700">
+                  {new Date(issue.createdAt).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Time</span>
+                <span className="text-xs font-medium text-slate-700">
+                  {new Date(issue.createdAt).toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Department */}
+          <div className="flex items-center justify-between bg-slate-50 rounded-xl p-4">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-slate-400" />
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Department
+              </span>
+            </div>
+            <span
+              className={`text-xs font-medium px-2 py-1 rounded-lg border ${getDeptColor(assignedDept)}`}
+            >
+              {assignedDept}
+            </span>
+          </div>
+
+          {/* Photos */}
+          {(issue as any).imageUrls?.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
+                Photos
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {(issue as any).imageUrls.map((url: string, i: number) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt={`Issue photo ${i + 1}`}
+                    className="w-20 h-20 object-cover rounded-lg border border-slate-200"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium rounded-xl transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------- Map View Component ----------
 declare global {
   interface Window {
@@ -207,8 +415,7 @@ function IssuesMapView({ issues }: { issues: Issue[] }) {
         marker.bindPopup(`
           <div style="min-width:180px">
             <b style="font-size:14px">${issue.category}</b><br/>
-            <span style="color:#64748b;font-size:12px">${issue.description?.substring(0, 60)}...</span><br/>
-            <br/>
+            <span style="color:#64748b;font-size:12px">${issue.description?.substring(0, 60)}...</span><br/><br/>
             <span style="background:${color};color:white;padding:2px 8px;border-radius:9999px;font-size:11px">${issue.priority} Priority</span>
             &nbsp;
             <span style="background:#e2e8f0;color:#334155;padding:2px 8px;border-radius:9999px;font-size:11px">${issue.status}</span>
@@ -520,6 +727,7 @@ export default function AdminDashboard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState("In Progress");
   const [changingDept, setChangingDept] = useState<Record<string, string>>({});
+  const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -654,7 +862,6 @@ export default function AdminDashboard() {
               Monitor and manage crowdsourced civic issues
             </p>
           </div>
-          {/* View Toggle */}
           <div className="flex bg-white border border-slate-200 rounded-xl p-1 gap-1 shadow-sm">
             {[
               { id: "list", icon: <List className="w-4 h-4" />, label: "List" },
@@ -875,7 +1082,8 @@ export default function AdminDashboard() {
               return (
                 <div
                   key={issue.id}
-                  className={`bg-white rounded-2xl shadow-sm border-2 transition-all duration-200 hover:shadow-md hover:scale-[1.01] ${
+                  onClick={() => setSelectedIssue(issue)}
+                  className={`bg-white rounded-2xl shadow-sm border-2 transition-all duration-200 hover:shadow-md hover:scale-[1.01] cursor-pointer ${
                     isSelected
                       ? "border-blue-400 ring-2 ring-blue-100"
                       : issue.status === "Resolved"
@@ -890,7 +1098,11 @@ export default function AdminDashboard() {
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleSelect(issue.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleSelect(issue.id);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                           className="mt-1 w-4 h-4 rounded border-slate-300 text-blue-600 cursor-pointer"
                         />
                         <div>
@@ -956,7 +1168,7 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Department Assignment */}
-                    <div className="mb-3">
+                    <div className="mb-3" onClick={(e) => e.stopPropagation()}>
                       <label className="block text-xs font-medium text-slate-500 mb-1.5 flex items-center gap-1">
                         <Building2 className="w-3 h-3" /> Department
                       </label>
@@ -1057,7 +1269,7 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Status */}
-                    <div className="mb-4">
+                    <div className="mb-4" onClick={(e) => e.stopPropagation()}>
                       <label className="block text-xs font-medium text-slate-500 mb-1">
                         Status
                       </label>
@@ -1106,6 +1318,13 @@ export default function AdminDashboard() {
                         </span>
                       </div>
                     </div>
+
+                    {/* Click hint */}
+                    <div className="mt-3 pt-3 border-t border-slate-100 text-center">
+                      <span className="text-xs text-blue-400 font-medium">
+                        Click card to view full details →
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
@@ -1113,6 +1332,12 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Issue Detail Modal */}
+      <IssueDetailModal
+        issue={selectedIssue}
+        onClose={() => setSelectedIssue(null)}
+      />
     </div>
   );
 }
