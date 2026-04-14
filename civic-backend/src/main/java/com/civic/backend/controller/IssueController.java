@@ -45,16 +45,13 @@ public ResponseEntity<Issue> getIssueById(@PathVariable Long id) {
 public ResponseEntity<?> updateIssue(
         @PathVariable Long id,
         @RequestBody Map<String, String> updateRequest) {
-
     String status = updateRequest.get("status");
     String priority = updateRequest.get("priority");
-
-    boolean updated = issueService.updateIssue(id, status, priority);
-
-    if (!updated) {
-        return ResponseEntity.badRequest().body("Invalid issue ID or status transition");
-    }
-
+    String assignedDepartment = updateRequest.get("assignedDepartment");
+    String departmentConfirmedStr = updateRequest.get("departmentConfirmed");
+    Boolean departmentConfirmed = departmentConfirmedStr != null ? Boolean.valueOf(departmentConfirmedStr) : null;
+    boolean updated = issueService.updateIssue(id, status, priority, assignedDepartment, departmentConfirmed);
+    if (!updated) return ResponseEntity.badRequest().body("Invalid issue ID or status transition");
     return issueService.getIssueById(id)
         .map(issue -> ResponseEntity.ok(issue))
         .orElse(ResponseEntity.notFound().build());
