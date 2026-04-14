@@ -256,7 +256,9 @@ function AnalyticsView({ issues }: { issues: Issue[] }) {
   const categoryData = useMemo(() => {
     const counts: Record<string, number> = {};
     issues.forEach((i) => {
-      counts[i.category] = (counts[i.category] || 0) + 1;
+      const cat =
+        i.category?.charAt(0).toUpperCase() + i.category?.slice(1) || "Other";
+      counts[cat] = (counts[cat] || 0) + 1;
     });
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
@@ -266,7 +268,7 @@ function AnalyticsView({ issues }: { issues: Issue[] }) {
   const statusData = useMemo(() => {
     const counts: Record<string, number> = {};
     issues.forEach((i) => {
-      counts[i.status] = (counts[i.status] || 0) + 1;
+      counts[i.status || "Pending"] = (counts[i.status || "Pending"] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [issues]);
@@ -274,7 +276,8 @@ function AnalyticsView({ issues }: { issues: Issue[] }) {
   const priorityData = useMemo(() => {
     const counts: Record<string, number> = {};
     issues.forEach((i) => {
-      counts[i.priority] = (counts[i.priority] || 0) + 1;
+      counts[i.priority || "Medium"] =
+        (counts[i.priority || "Medium"] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [issues]);
@@ -290,6 +293,18 @@ function AnalyticsView({ issues }: { issues: Issue[] }) {
       .sort((a, b) => b.value - a.value);
   }, [issues]);
 
+  if (issues.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200 p-12 text-center mb-8">
+        <p className="text-slate-500 font-medium">No data available</p>
+      </div>
+    );
+  }
+
+  const maxCategory = Math.max(...categoryData.map((d) => d.value));
+  const maxDept = Math.max(...deptData.map((d) => d.value));
+  const total = issues.length;
+
   return (
     <div className="mb-8 space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -298,93 +313,163 @@ function AnalyticsView({ issues }: { issues: Issue[] }) {
           <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-blue-500" /> Issues by Category
           </h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart
-              data={categoryData}
-              margin={{ top: 5, right: 10, bottom: 40, left: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 11 }}
-                angle={-30}
-                textAnchor="end"
-              />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Bar dataKey="value" name="Issues" radius={[4, 4, 0, 0]}>
-                {categoryData.map((_, i) => (
-                  <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="space-y-3">
+            {categoryData.map((item, i) => (
+              <div key={item.name}>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-slate-600 font-medium">
+                    {item.name}
+                  </span>
+                  <span className="text-slate-500">{item.value}</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2.5">
+                  <div
+                    className="h-2.5 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${(item.value / maxCategory) * 100}%`,
+                      backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Status Pie Chart */}
+        {/* Status Donut */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-green-500" /> Issues by Status
           </h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie
-                data={statusData}
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                dataKey="value"
-                label={(props) => {
-                  const { name, percent } = props;
-
-                  if (!name || percent === undefined) return "";
-
-                  return `${name} ${(percent * 100).toFixed(0)}%`;
-                }}
-              >
-                {statusData.map((entry, i) => (
-                  <Cell
-                    key={i}
-                    fill={STATUS_COLORS[entry.name] || CHART_COLORS[i]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="flex items-center gap-6">
+            <div className="relative w-32 h-32 flex-shrink-0">
+              <svg viewBox="0 0 36 36" className="w-32 h-32 -rotate-90">
+                {(() => {
+                  let offset = 0;
+                  return statusData.map((item, i) => {
+                    const pct = (item.value / total) * 100;
+                    const color = STATUS_COLORS[item.name] || CHART_COLORS[i];
+                    const el = (
+                      <circle
+                        key={item.name}
+                        cx="18"
+                        cy="18"
+                        r="15.9"
+                        fill="none"
+                        stroke={color}
+                        strokeWidth="3.5"
+                        strokeDasharray={`${pct} ${100 - pct}`}
+                        strokeDashoffset={-offset}
+                      />
+                    );
+                    offset += pct;
+                    return el;
+                  });
+                })()}
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold text-slate-800">
+                  {total}
+                </span>
+                <span className="text-xs text-slate-500">Total</span>
+              </div>
+            </div>
+            <div className="space-y-2 flex-1">
+              {statusData.map((item, i) => (
+                <div
+                  key={item.name}
+                  className="flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{
+                        backgroundColor:
+                          STATUS_COLORS[item.name] || CHART_COLORS[i],
+                      }}
+                    />
+                    <span className="text-sm text-slate-600">{item.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-slate-800">
+                      {item.value}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      ({((item.value / total) * 100).toFixed(0)}%)
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Priority Pie Chart */}
+        {/* Priority Donut */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-red-500" /> Issues by Priority
           </h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie
-                data={priorityData}
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                dataKey="value"
-                label={(props) => {
-                  const { name, percent } = props;
-
-                  if (!name || percent === undefined) return "";
-
-                  return `${name} ${(percent * 100).toFixed(0)}%`;
-                }}
-              >
-                {priorityData.map((entry, i) => (
-                  <Cell
-                    key={i}
-                    fill={PRIORITY_COLORS[entry.name] || CHART_COLORS[i]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="flex items-center gap-6">
+            <div className="relative w-32 h-32 flex-shrink-0">
+              <svg viewBox="0 0 36 36" className="w-32 h-32 -rotate-90">
+                {(() => {
+                  let offset = 0;
+                  return priorityData.map((item, i) => {
+                    const pct = (item.value / total) * 100;
+                    const color = PRIORITY_COLORS[item.name] || CHART_COLORS[i];
+                    const el = (
+                      <circle
+                        key={item.name}
+                        cx="18"
+                        cy="18"
+                        r="15.9"
+                        fill="none"
+                        stroke={color}
+                        strokeWidth="3.5"
+                        strokeDasharray={`${pct} ${100 - pct}`}
+                        strokeDashoffset={-offset}
+                      />
+                    );
+                    offset += pct;
+                    return el;
+                  });
+                })()}
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold text-slate-800">
+                  {total}
+                </span>
+                <span className="text-xs text-slate-500">Total</span>
+              </div>
+            </div>
+            <div className="space-y-2 flex-1">
+              {priorityData.map((item, i) => (
+                <div
+                  key={item.name}
+                  className="flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{
+                        backgroundColor:
+                          PRIORITY_COLORS[item.name] || CHART_COLORS[i],
+                      }}
+                    />
+                    <span className="text-sm text-slate-600">{item.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-slate-800">
+                      {item.value}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      ({((item.value / total) * 100).toFixed(0)}%)
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Department Bar Chart */}
@@ -393,28 +478,27 @@ function AnalyticsView({ issues }: { issues: Issue[] }) {
             <Building2 className="w-4 h-4 text-purple-500" /> Issues by
             Department
           </h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart
-              data={deptData}
-              layout="vertical"
-              margin={{ top: 5, right: 20, bottom: 5, left: 120 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis type="number" tick={{ fontSize: 11 }} />
-              <YAxis
-                dataKey="name"
-                type="category"
-                tick={{ fontSize: 10 }}
-                width={120}
-              />
-              <Tooltip />
-              <Bar dataKey="value" name="Issues" radius={[0, 4, 4, 0]}>
-                {deptData.map((_, i) => (
-                  <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="space-y-3">
+            {deptData.map((item, i) => (
+              <div key={item.name}>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-slate-600 font-medium truncate max-w-[180px]">
+                    {item.name}
+                  </span>
+                  <span className="text-slate-500">{item.value}</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2.5">
+                  <div
+                    className="h-2.5 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${(item.value / maxDept) * 100}%`,
+                      backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
