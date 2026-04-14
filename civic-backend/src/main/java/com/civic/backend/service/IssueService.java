@@ -102,18 +102,14 @@ public Optional<Issue> getIssueById(Long id) {
     return issueRepository.findById(id);
 }
 
-public boolean updateIssue(Long id, String newStatus, String newPriority) {
+public boolean updateIssue(Long id, String newStatus, String newPriority, String assignedDepartment, Boolean departmentConfirmed) {
     Optional<Issue> optIssue = issueRepository.findById(id);
-    if (optIssue.isEmpty()) {
-        return false;
-    }
+    if (optIssue.isEmpty()) return false;
     Issue issue = optIssue.get();
-    if (newStatus != null) {
-        issue.setStatus(newStatus);
-    }
-    if (newPriority != null) {
-        issue.setPriority(newPriority);
-    }
+    if (newStatus != null) issue.setStatus(newStatus);
+    if (newPriority != null) issue.setPriority(newPriority);
+    if (assignedDepartment != null) issue.setAssignedDepartment(assignedDepartment);
+    if (departmentConfirmed != null) issue.setDepartmentConfirmed(departmentConfirmed);
     issueRepository.save(issue);
     return true;
 }

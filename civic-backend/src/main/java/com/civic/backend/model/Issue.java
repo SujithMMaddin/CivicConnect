@@ -37,6 +37,12 @@ public class Issue {
     @Column(nullable = true)
     private String userId;
 
+    @Column(nullable = true)
+private String assignedDepartment;
+
+@Column(nullable = true)  
+private Boolean departmentConfirmed;
+
     @ElementCollection
     private List<String> imageUrls;
 
@@ -130,4 +136,9 @@ public class Issue {
     public void setImageUrls(List<String> imageUrls) {
         this.imageUrls = imageUrls;
     }
+
+    public String getAssignedDepartment() { return assignedDepartment; }
+public void setAssignedDepartment(String assignedDepartment) { this.assignedDepartment = assignedDepartment; }
+public Boolean getDepartmentConfirmed() { return departmentConfirmed; }
+public void setDepartmentConfirmed(Boolean departmentConfirmed) { this.departmentConfirmed = departmentConfirmed; }
 }
