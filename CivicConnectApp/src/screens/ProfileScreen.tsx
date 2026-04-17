@@ -306,6 +306,7 @@ export default function ProfileScreen() {
             title="App Settings"
             subtitle="Language, region"
             isLast
+            onPress={() => navigation.navigate("AppSettings")}
           />
         </View>
 

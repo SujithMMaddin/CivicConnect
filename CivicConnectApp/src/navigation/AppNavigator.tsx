@@ -24,6 +24,7 @@ export type RootStackParamList = {
   HelpCenter: undefined;
   TermsOfService: undefined;
   PrivacyPolicy: undefined;
+  AppSettings: undefined;
 };
 
 export type TabParamList = {
@@ -138,6 +139,10 @@ const AppNavigator: React.FC = () => {
           component={require("../screens/SignupPage").default}
         />
         <Stack.Screen name="MainTabs" component={MainTabs} />
+        <Stack.Screen
+          name="AppSettings"
+          component={require("../screens/AppSettingsScreen").default}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

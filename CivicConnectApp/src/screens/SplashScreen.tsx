@@ -10,6 +10,11 @@ import {
 } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { supabase } from "../api/supabase";
+import {
+  checkIssueStatusChanges,
+  checkNearbyIssues,
+} from "../api/notificationService";
+import * as Location from "expo-location";
 
 const { width } = Dimensions.get("window");
 
@@ -36,6 +41,25 @@ export default function SplashScreen() {
           navigation.replace("MainTabs"); // already logged in
         } else {
           navigation.replace("Login"); // not logged in
+        }
+
+        if (session) {
+          // Check status changes
+          await checkIssueStatusChanges(session.user.id);
+
+          // Check nearby issues
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status === "granted") {
+            const loc = await Location.getCurrentPositionAsync({});
+            await checkNearbyIssues(
+              loc.coords.latitude,
+              loc.coords.longitude,
+              2,
+            );
+          }
+          navigation.replace("MainTabs");
+        } else {
+          navigation.replace("Login");
         }
       } catch (err) {
         navigation.replace("Login"); // on error go to login

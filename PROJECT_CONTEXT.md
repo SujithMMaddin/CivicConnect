@@ -9,10 +9,10 @@
 **Platforms**:
 
 - **Mobile**: React Native Expo app (CivicConnectApp) - report issues with GPS, camera, maps.
-- **Web Dashboard**: React Vite app (CivicReport) - view/manage issues, stats, profile.
+- **Web Dashboard**: React Vite app (\"My new app\" - civic-admin-dashboard prototype) - view/manage issues, stats, profile.
 - **Backend**: Spring Boot Java REST API (civic-backend) - PostgreSQL, issue CRUD.
 - **Admin Web**: Static HTML/JS (admin-web).
-- **Experimental**: 'My new app' (Vite React admin dashboard prototype).
+- **Experimental**: Additional Vite React prototypes.
 
 **Development Stage**: Active development. Mobile/web fronts advanced with many screens/components implemented, backend API core ready, integrations/TODOs ongoing.
 
@@ -52,17 +52,16 @@
 - TypeScript
 - Run: `cd CivicConnectApp && npx expo start`
 
-### Web (CivicReport)
+### Web (\"My new app\" / civic-admin-dashboard)
 
 - React 19 + Vite
-- Tailwind CSS, shadcn/ui (Radix primitives), Lucide icons
+- Tailwind CSS 3.4.17, shadcn/ui (Radix primitives), Lucide icons
 - Hono/Cloudflare Workers (wrangler.toml)
-- Run: `cd CivicReport && npm run dev`
+- Run: `cd \"My new app\" && npm run dev`
 
 ### Others
 
 - admin-web: Vanilla HTML/CSS/JS
-- My new app: Vite React + Tailwind
 
 ## 📁 Complete File Inventory (Excluding Ignorables: Builds, Locks, Binaries, Caches)
 
@@ -71,6 +70,7 @@
 - .gitignore
 - PROJECT_CONTEXT.md
 - TODO.md
+- TODO_PLAN.md
 
 ### admin-web/
 
@@ -103,34 +103,16 @@
 - tsconfig.json
 - android/app/src/main/AndroidManifest.xml (key config)
 - android/gradle/wrapper/gradle-wrapper.properties
-- assets/adaptive-icon.png, assets/favicon.png, assets/icon.png, assets/logo.png (icons only)
-- src/api/config.ts
-- src/api/issues.ts
-- src/api/supabase.ts
-- src/components/IssueCard.tsx
-- src/components/StatCard.tsx
+- assets/ (icons, logo)
+- src/api/config.ts, src/api/issues.ts, src/api/supabase.ts
+- src/components/ (IssueCard.tsx, StatCard.tsx)
 - src/navigation/AppNavigator.tsx
-- src/screens/HelpCenterScreen.tsx
-- src/screens/IssuesScreen.tsx
-- src/screens/LandingPage.tsx
-- src/screens/LoginPage.tsx
-- src/screens/MyReportsScreen.tsx
-- src/screens/PersonalInfoScreen.tsx
-- src/screens/PrivacyPolicyScreen.tsx
-- src/screens/PrivacySecurityScreen.tsx
-- src/screens/ProfileScreen.tsx
-- src/screens/ReportIssueScreen.tsx
-- src/screens/SignupPage.tsx
-- src/screens/SplashScreen.tsx
-- src/screens/TermsOfServiceScreen.tsx
-- src/components/IssueCard.tsx
-- src/components/StatCard.tsx
-- src/styles/colors.ts
-- src/styles/theme.ts
+- src/screens/ (HelpCenterScreen.tsx, IssuesScreen.tsx, LandingPage.tsx, LoginPage.tsx, MyReportsScreen.tsx, PersonalInfoScreen.tsx, PrivacyPolicyScreen.tsx, PrivacySecurityScreen.tsx, ProfileScreen.tsx, ReportIssueScreen.tsx, SignupPage.tsx, SplashScreen.tsx, TermsOfServiceScreen.tsx)
+- src/styles/ (colors.ts, theme.ts)
 - src/types.ts
 - src/utils/stats.ts
 
-### CivicReport/
+### My new app/ (civic-admin-dashboard prototype)
 
 - .gitignore
 - eslint.config.js
@@ -138,98 +120,52 @@
 - knip.json
 - package.json
 - postcss.config.js
-- README.md
 - tailwind.config.js
-- tsconfig.app.json
-- tsconfig.json
-- tsconfig.node.json
-- tsconfig.worker.json
+- TODO_PLAN.md, TODO.md
+- tsconfig\*.json
 - vite.config.ts
 - wrangler.json
-- docs/todo.md
-- public/robots.txt
-- src/react-app/App.tsx
-- src/react-app/index.css
-- src/react-app/main.tsx
-- src/react-app/vite-env.d.ts
-- src/react-app/components/IssueCard.tsx
-- src/react-app/components/StatCard.tsx
-- src/react-app/components/layout/MobileLayout.tsx
-  src/react-app/components/ui/ (expanded primitives: accordion.tsx, alert-dialog.tsx, avatar.tsx, badge.tsx, button.tsx, card.tsx, checkbox.tsx, collapsible.tsx, dialog.tsx, dropdown-menu.tsx, field.tsx, input-group.tsx, input.tsx, label.tsx, popover.tsx, progress.tsx, radio-group.tsx, scroll-area.tsx, select.tsx, separator.tsx, skeleton.tsx, slider.tsx, switch.tsx, table.tsx, tabs.tsx, textarea.tsx, tooltip.tsx)
-- src/react-app/data/issues.ts
-- src/react-app/lib/utils.ts
-- src/react-app/pages/Home.tsx
-- src/react-app/pages/IssueDetail.tsx
-- src/react-app/pages/Issues.tsx
-- src/react-app/pages/Profile.tsx
-- src/react-app/pages/Report.tsx
-- src/shared/types.ts
-- src/worker/index.ts
-
-### My new app/
-
-- .gitignore
-- eslint.config.js
-- index.html
-- knip.json
-- package.json
-- postcss.config.js
-- README.md
-- tailwind.config.js
-- TODO.md
-- tsconfig.app.json
-- tsconfig.json
-- tsconfig.node.json
-- tsconfig.worker.json
-- vite.config.ts
-- wrangler.json
-- docs/todo.md
-- src/react-app/App.tsx
-- src/react-app/index.css
-- src/react-app/main.tsx
-- src/react-app/vite-env.d.ts
-- src/react-app/pages/AdminDashboard.tsx
-- src/react-app/pages/Home.tsx
-- src/shared/api.ts
-- src/shared/types.ts
+- src/react-app/ (App.tsx, pages/AdminDashboard.tsx, Home.tsx, components/ui/\* shadcn primitives)
+- src/shared/ (api.ts, types.ts)
 - src/worker/index.ts
 
 ## 🎯 Current State & Till-Date Updates
 
 ### VSCode Focus (Active Development Areas)
 
-Heavy emphasis on CivicConnectApp screens (AdminDashboardScreen, HomeScreen, IssuesScreen, ProfileScreen, ReportIssueScreen, CivicDataInsightsScreen, MyReportsScreen), backend Issue\* (Controller/Service/Model), CivicReport pages (Issues, Home, Report, Profile).
+- **Visible**: PROJECT_CONTEXT.md, TODO_PLAN.md
+- **Open Tabs**: Backend Issue.java/service/controller.java; My new app TODO_PLAN.md/postcss.config.js/api.ts/AdminDashboard.tsx/vite.config.ts/TODO.md; CivicConnectApp LoginPage.tsx/api/config.ts/ProfileScreen.tsx.
+
+Heavy work on backend Issue impl, admin dashboard (My new app), RN auth/screens/api.
 
 ### TODO Progress
 
-- **Root TODO.md**: PROJECT_CONTEXT.md update ✅
-- **civic-backend/TODO.md**: Issue creation null-safety ✅; rebuild/test/stability pending (frequent JVM crashes: hs_err_pid\*.log) ⏳
-- **admin-web/TODO.md**: Pinterest UI redesign ✅
-- **My new app/TODO.md**: Cleanup/rename complete ✅
-- **CivicReport/docs/todo.md**: Maps/animations/image upload ⏳
+- **Root**: PROJECT_CONTEXT.md update ✅
+- **civic-backend/TODO.md**: Issue null-safety ✅; rebuild/test/stability pending (JVM crashes: hs_err_pid\*.log) ⏳
+- **admin-web/TODO.md**: Pinterest UI ✅
+- **My new app/TODO_PLAN.md/TODO.md**: Cleanup/rename ✅, AdminDashboard stats/API
+- **CivicConnectApp/TODO\*.md**: Screens complete, Supabase/API integration ⏳
 
-### Recent/Updated Code Highlights (Till Date)
+### Recent/Updated Code Highlights
 
-- Backend: Null-safety in IssueService.createIssue(), core Issue model/controller.
-- admin-web: Full responsive Pinterest-inspired redesign (CSS, JS).
-- My new app: Renamed to civic-admin-dashboard prototype, AdminDashboard.tsx with stats/API integration, Home.tsx.
-- CivicConnectApp: Comprehensive screens (Splash→Landing→Auth→Home/Issues/Report/Profile/Insights/Admin), navigation, API layers (Supabase config, issues.ts), components (IssueCard, StatCard), theme/styles.
-- CivicReport: Full UI primitives (shadcn), pages (Home/Issues/Detail/Profile/Report), responsive MobileLayout, data mocks, utils.
+- Backend: Issue model/service/controller (open tabs).
+- My new app: AdminDashboard.tsx with stats/API (shared/api.ts), vite/postcss configs updated.
+- CivicConnectApp: Login/Profile screens, api/config.ts (BASE_URL: localhost:8080).
 
-**Integration Status**: Frontends ready for backend API calls; testing duplicate/priority logic next.
+**Integration Status**: Frontends ready for API; test duplicate/priority next.
 
 ## 🚀 Quick Start Commands
 
 1. **Backend**: `cd civic-backend && mvn clean spring-boot:run`
 2. **Mobile**: `cd CivicConnectApp && npx expo start`
-3. **CivicReport Web**: `cd CivicReport && npm install && npm run dev`
-4. **My new app**: `cd \"My new app\" && npm install && npm run dev`
-5. **Admin**: Open `admin-web/index.html`
+3. **Web Admin**: `cd \"My new app\" && npm install && npm run dev`
+4. **Admin**: Open `admin-web/index.html`
 
 ## 🔗 Key Reference Files
 
 - API: civic-backend/API_Contract.md, PROJECT_STRUCTURE.md
-- Types: CivicConnectApp/src/types.ts, CivicReport/src/shared/types.ts, My new app/src/shared/types.ts
+- Types: Various src/types.ts, shared/types.ts
+- Configs: package.json/pom.xml, api/config.ts, vite.config.ts
 
-**Last Updated**: Current as of latest environment scan. Full source control via Git.
-_Share this with AI agents for complete project context._
+**Last Updated**: VSCode environment scan - PROJECT*CONTEXT.md refreshed for accuracy. Full source via Git.
+\_Share with AI agents for context.*

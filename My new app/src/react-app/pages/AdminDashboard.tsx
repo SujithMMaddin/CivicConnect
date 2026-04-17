@@ -714,6 +714,7 @@ function AnalyticsView({ issues }: { issues: Issue[] }) {
 
 // ---------- Main Dashboard ----------
 export default function AdminDashboard() {
+  const [sortNewest, setSortNewest] = useState(true);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -755,24 +756,39 @@ export default function AdminDashboard() {
     [issues],
   );
 
-  const filteredIssues = useMemo(
-    () =>
-      issues.filter((issue) => {
-        const matchesSearch =
-          searchQuery === "" ||
-          issue.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          issue.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          issue.description.toLowerCase().includes(searchQuery.toLowerCase());
-        return (
-          matchesSearch &&
-          (statusFilter === "All" || issue.status === statusFilter) &&
-          (priorityFilter === "All" || issue.priority === priorityFilter) &&
-          (categoryFilter === "All" ||
-            issue.category.toLowerCase() === categoryFilter.toLowerCase())
-        );
-      }),
-    [issues, searchQuery, statusFilter, priorityFilter, categoryFilter],
-  );
+  const filteredIssues = useMemo(() => {
+    let data = issues.filter((issue) => {
+      const matchesSearch =
+        searchQuery === "" ||
+        issue.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        issue.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        issue.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return (
+        matchesSearch &&
+        (statusFilter === "All" || issue.status === statusFilter) &&
+        (priorityFilter === "All" || issue.priority === priorityFilter) &&
+        (categoryFilter === "All" ||
+          issue.category.toLowerCase() === categoryFilter.toLowerCase())
+      );
+    });
+
+    // 🔥 SORT LOGIC
+    data.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return sortNewest ? dateB - dateA : dateA - dateB;
+    });
+
+    return data;
+  }, [
+    issues,
+    searchQuery,
+    statusFilter,
+    priorityFilter,
+    categoryFilter,
+    sortNewest,
+  ]);
 
   const handleStatusUpdate = async (id: string, newStatus: Issue["status"]) => {
     if (!id || isNaN(Number(id))) return;
@@ -998,6 +1014,29 @@ export default function AdminDashboard() {
                   </option>
                 ))}
               </select>
+              <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+                <button
+                  onClick={() => setSortNewest(true)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
+                    sortNewest
+                      ? "bg-white shadow text-slate-900"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  Newest
+                </button>
+
+                <button
+                  onClick={() => setSortNewest(false)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
+                    !sortNewest
+                      ? "bg-white shadow text-slate-900"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  Oldest
+                </button>
+              </div>
             </div>
           </div>
         </div>
