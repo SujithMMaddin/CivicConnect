@@ -49,12 +49,12 @@ public ResponseEntity<?> updateIssue(
     String priority = updateRequest.get("priority");
     String assignedDepartment = updateRequest.get("assignedDepartment");
     String departmentConfirmedStr = updateRequest.get("departmentConfirmed");
+    String address = updateRequest.get("address");
     Boolean departmentConfirmed = departmentConfirmedStr != null ? Boolean.valueOf(departmentConfirmedStr) : null;
-    boolean updated = issueService.updateIssue(id, status, priority, assignedDepartment, departmentConfirmed);
+    boolean updated = issueService.updateIssue(id, status, priority, assignedDepartment, departmentConfirmed, address);
     if (!updated) return ResponseEntity.badRequest().body("Invalid issue ID or status transition");
     return issueService.getIssueById(id)
         .map(issue -> ResponseEntity.ok(issue))
         .orElse(ResponseEntity.notFound().build());
 }
-
 }
