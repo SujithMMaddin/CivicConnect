@@ -130,8 +130,12 @@ const IssueCard = ({ issue, colors }: { issue: Issue; colors: any }) => {
           </View>
           <View style={styles.issueMeta2}>
             <MapPin size={12} color={colors.textMuted} />
-            <Text style={[styles.metaText, { color: colors.textMuted }]}>
-              {`${issue.latitude?.toFixed(3)}, ${issue.longitude?.toFixed(3)}`}
+            <Text
+              style={[styles.metaText, { color: colors.textMuted }]}
+              numberOfLines={1}
+            >
+              {(issue as any).address ||
+                `${issue.latitude?.toFixed(3)}, ${issue.longitude?.toFixed(3)}`}
             </Text>
             <Clock size={12} color={colors.textMuted} />
             <Text style={[styles.metaText, { color: colors.textMuted }]}>

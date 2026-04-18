@@ -21,7 +21,7 @@ import { useTheme } from "../context/ThemeContext";
 import { fetchIssues, type Issue } from "../api/issues";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { useLanguage } from "../context/LanguageContext";
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 // --- Reusable Sub-Components ---
@@ -122,6 +122,7 @@ export default function ProfileScreen() {
   const [user, setUser] = useState<any>(null);
   const [myIssues, setMyIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useFocusEffect(
     useCallback(() => {
@@ -212,7 +213,7 @@ export default function ProfileScreen() {
               {user?.email || "No email"}
             </Text>
             <Text style={[styles.userRole, { color: colors.textSecondary }]}>
-              Community Member
+              {t("communityMember")}
             </Text>
           </View>
         </View>

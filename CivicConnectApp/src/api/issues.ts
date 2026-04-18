@@ -12,6 +12,7 @@ export interface Issue {
   longitude: number;
   imageUrl?: string;
   createdAt: string;
+  address?: string;
 }
 
 // ---------- Simple Cache ----------
@@ -46,6 +47,7 @@ export const fetchIssues = async (forceRefresh = false): Promise<Issue[]> => {
         ? `${issue.category.charAt(0).toUpperCase() + issue.category.slice(1)} Issue #${issue.id}`
         : "Untitled Issue",
       location: `Lat ${issue.latitude?.toFixed(4)}, Lng ${issue.longitude?.toFixed(4)}`,
+      address: issue.address || null,
     })) as Issue[];
 
     // Save to cache

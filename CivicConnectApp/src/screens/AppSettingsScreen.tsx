@@ -13,6 +13,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
+import { Language } from "../utils/translations";
 
 const LANGUAGES = [
   { code: "en", label: "English", native: "English" },
@@ -40,6 +42,7 @@ export default function AppSettingsScreen() {
   const [selectedLanguage, setSelectedLanguage] = useState("en");
   const [selectedRegion, setSelectedRegion] = useState("IN-KA");
   const [saved, setSaved] = useState(false);
+  const { setLanguage } = useLanguage();
 
   useEffect(() => {
     const load = async () => {
@@ -61,6 +64,7 @@ export default function AppSettingsScreen() {
       await AsyncStorage.setItem("app_region", selectedRegion);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+      setLanguage(selectedLanguage as Language);
       Alert.alert(
         "Settings Saved",
         "Your language and region preferences have been saved.",

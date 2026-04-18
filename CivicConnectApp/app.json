@@ -28,6 +28,10 @@
     "web": {
       "favicon": "./assets/applogo.png"
     },
-    "plugins": ["expo-web-browser", "expo-notifications"]
+    "plugins": [
+      "expo-web-browser",
+      "expo-notifications",
+      "expo-localization"
+    ]
   }
 }
