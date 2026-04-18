@@ -31,6 +31,12 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { fetchIssues, type Issue } from "../api/issues";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useTheme } from "../context/ThemeContext";
+import {
+  checkIssueStatusChanges,
+  checkNearbyIssues,
+} from "../api/notificationService";
+import { supabase } from "../api/supabase";
+import * as Location from "expo-location";
 
 // ---------- Icon Components ----------
 const BellIcon = ({ cardBg }: { cardBg: string }) => (
@@ -271,6 +277,38 @@ export default function CivicReportHome() {
     loadIssues();
   }, []);
 
+  useEffect(() => {
+    const runNotificationChecks = async () => {
+      try {
+        // Get current user
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Check status changes for user's issues
+        await checkIssueStatusChanges(user.id);
+
+        // Check nearby issues using current location
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status === "granted") {
+          const loc = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          await checkNearbyIssues(
+            loc.coords.latitude,
+            loc.coords.longitude,
+            2, // 2km radius
+          );
+        }
+      } catch (err) {
+        console.error("Notification check error:", err);
+      }
+    };
+
+    runNotificationChecks();
+  }, []); // runs once on home screen load
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -287,8 +325,8 @@ export default function CivicReportHome() {
   const highPriority = issues.filter(
     (i: Issue) => i.priority === "High",
   ).length;
-  const pendingCount = issues.filter(
-    (i: Issue) => i.status === "Pending",
+  const inProgressCount = issues.filter(
+    (i: Issue) => i.status === "In Progress",
   ).length;
   const resolved = issues.filter((i: Issue) => i.status === "Resolved").length;
 
@@ -364,7 +402,7 @@ export default function CivicReportHome() {
           />
           <StatCard
             label="IN PROGRESS"
-            value={pendingCount.toString()}
+            value={inProgressCount.toString()}
             icon={<FileOrangeIcon />}
             cardBg={colors.card}
             textColor={colors.text}

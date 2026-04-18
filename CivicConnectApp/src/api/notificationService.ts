@@ -3,16 +3,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { fetchIssues } from "./issues";
 
 // Configure notification handler
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
-
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+} catch (err) {
+  console.log("Notification handler skipped");
+}
 export const requestNotificationPermission = async (): Promise<boolean> => {
   try {
     const { status: existing } = await Notifications.getPermissionsAsync();
