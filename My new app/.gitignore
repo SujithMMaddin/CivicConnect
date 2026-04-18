@@ -1,5 +1,26 @@
-dist/
+# Node / React / Expo
 node_modules/
-.wrangler/
-.dev.vars
-worker-configuration.d.ts
+.expo/
+.expo-shared/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Java / Maven
+target/
+*.class
+*.jar
+
+# Environment files
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Gradle
+.gradle/

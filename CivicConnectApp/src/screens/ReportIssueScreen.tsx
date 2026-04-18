@@ -702,6 +702,9 @@ export default function ReportIssueScreen() {
         description,
         latitude: latitude ?? 0,
         longitude: longitude ?? 0,
+        address:
+          address ||
+          `Lat: ${latitude?.toFixed(4)}, Lng: ${longitude?.toFixed(4)}`,
         status: "Pending",
         priority: category === "Water" ? "High" : "Medium",
         userId: user?.id ?? null,

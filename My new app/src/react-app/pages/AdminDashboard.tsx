@@ -18,7 +18,12 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { Issue, fetchIssues, updateIssueStatus } from "@/shared/api";
+import {
+  Issue,
+  fetchIssues,
+  updateIssueStatus,
+  fetchUserDetails,
+} from "@/shared/api";
 
 // ---------- Constants ----------
 const CATEGORIES = [
@@ -138,9 +143,11 @@ function formatDate(dateString: string): string {
 function IssueDetailModal({
   issue,
   onClose,
+  userDetails,
 }: {
   issue: Issue | null;
   onClose: () => void;
+  userDetails: Record<string, { name: string; email: string }>;
 }) {
   if (!issue) return null;
 
@@ -225,13 +232,17 @@ function IssueDetailModal({
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Name</span>
                 <span className="text-xs font-medium text-slate-700">
-                  {(issue as any).userName || "Not available"}
+                  {userId && userDetails[userId]?.name
+                    ? userDetails[userId].name
+                    : "Not available"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Email</span>
                 <span className="text-xs font-medium text-slate-700">
-                  {(issue as any).userEmail || "Not available"}
+                  {userId && userDetails[userId]?.email
+                    ? userDetails[userId].email
+                    : "Not available"}
                 </span>
               </div>
             </div>
@@ -714,6 +725,9 @@ function AnalyticsView({ issues }: { issues: Issue[] }) {
 
 // ---------- Main Dashboard ----------
 export default function AdminDashboard() {
+  const [userDetails, setUserDetails] = useState<
+    Record<string, { name: string; email: string }>
+  >({});
   const [sortNewest, setSortNewest] = useState(true);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
@@ -736,6 +750,13 @@ export default function AdminDashboard() {
         setLoading(true);
         const data = await fetchIssues();
         setIssues(data);
+
+        // Fetch user details for all reporters
+        const userIds = data.map((i: any) => i.userId).filter(Boolean);
+        if (userIds.length > 0) {
+          const details = await fetchUserDetails(userIds);
+          setUserDetails(details);
+        }
       } catch {
         setError("Failed to load issues.");
       } finally {
@@ -744,7 +765,6 @@ export default function AdminDashboard() {
     };
     load();
   }, []);
-
   const summary = useMemo(
     () => ({
       total: issues.length,
@@ -1376,6 +1396,7 @@ export default function AdminDashboard() {
       <IssueDetailModal
         issue={selectedIssue}
         onClose={() => setSelectedIssue(null)}
+        userDetails={userDetails}
       />
     </div>
   );

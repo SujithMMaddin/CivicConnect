@@ -38,6 +38,9 @@ public class Issue {
     private String userId;
 
     @Column(nullable = true)
+private String address;
+
+    @Column(nullable = true)
 private String assignedDepartment;
 
 @Column(nullable = true)  
@@ -141,4 +144,12 @@ private Boolean departmentConfirmed;
 public void setAssignedDepartment(String assignedDepartment) { this.assignedDepartment = assignedDepartment; }
 public Boolean getDepartmentConfirmed() { return departmentConfirmed; }
 public void setDepartmentConfirmed(Boolean departmentConfirmed) { this.departmentConfirmed = departmentConfirmed; }
+
+public String getAddress() {
+    return address;
+}
+
+public void setAddress(String address) {
+    this.address = address;
+}
 }
