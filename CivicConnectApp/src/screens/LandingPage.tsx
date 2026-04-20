@@ -31,6 +31,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { fetchIssues, type Issue } from "../api/issues";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 import {
   checkIssueStatusChanges,
   checkNearbyIssues,
@@ -39,65 +40,55 @@ import { supabase } from "../api/supabase";
 import * as Location from "expo-location";
 
 // ---------- Icon Components ----------
-const BellIcon = ({ cardBg }: { cardBg: string }) => (
-  <View style={[styles.bellIconWrapper]}>
+const BellIcon = () => (
+  <View style={styles.bellIconWrapper}>
     <Bell size={20} color="#000" />
     <View style={styles.bellDot} />
   </View>
 );
-
 const PlusIcon = () => (
   <View style={styles.plusIconBox}>
     <Plus size={22} color="#FFFFFF" strokeWidth={3} />
   </View>
 );
-
 const ArrowRight = ({ color = "#2563EB" }) => (
   <ChevronRight size={24} color={color} strokeWidth={2.5} />
 );
-
 const FileIcon = ({ color = "#93C5FD" }) => (
   <View style={[styles.statIconBox, { backgroundColor: `${color}22` }]}>
     <FileText size={20} color={color} />
   </View>
 );
-
 const AlertTriangleIcon = () => (
   <View style={[styles.statIconBox, { backgroundColor: "#FEE2E2" }]}>
     <AlertTriangle size={20} color="#DC2626" />
   </View>
 );
-
 const FileOrangeIcon = () => (
   <View style={[styles.statIconBox, { backgroundColor: "#FEF3C7" }]}>
     <ClipboardList size={20} color="#D97706" />
   </View>
 );
-
 const CheckCircleIcon = () => (
   <View style={[styles.statIconBox, { backgroundColor: "#D1FAE5" }]}>
     <CheckCircle size={20} color="#059669" />
   </View>
 );
-
 const TrashIcon = ({ bg }: { bg: string }) => (
   <View style={[styles.issueIconBox, { backgroundColor: bg }]}>
     <Trash2 size={18} color="#475569" />
   </View>
 );
-
 const WrenchIcon = ({ bg }: { bg: string }) => (
   <View style={[styles.issueIconBox, { backgroundColor: bg }]}>
     <Wrench size={18} color="#475569" />
   </View>
 );
-
 const DropletIcon = ({ bg }: { bg: string }) => (
   <View style={[styles.issueIconBox, { backgroundColor: bg }]}>
     <Droplets size={18} color="#475569" />
   </View>
 );
-
 const InfoIcon = ({ bg }: { bg: string }) => (
   <View style={[styles.issueIconBox, { backgroundColor: bg }]}>
     <Info size={18} color="#1D4ED8" />
@@ -227,6 +218,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList>;
 export default function CivicReportHome() {
   const navigation = useNavigation<NavigationProp>();
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -268,8 +260,7 @@ export default function CivicReportHome() {
         const data = await fetchIssues(true);
         setIssues(data);
       } catch (err: any) {
-        console.error("Failed to fetch issues:", err);
-        setError("Failed to load issues. Please check your connection.");
+        setError(t("error"));
       } finally {
         setLoading(false);
       }
@@ -280,34 +271,24 @@ export default function CivicReportHome() {
   useEffect(() => {
     const runNotificationChecks = async () => {
       try {
-        // Get current user
         const {
           data: { user },
         } = await supabase.auth.getUser();
         if (!user) return;
-
-        // Check status changes for user's issues
         await checkIssueStatusChanges(user.id);
-
-        // Check nearby issues using current location
         const { status } = await Location.getForegroundPermissionsAsync();
         if (status === "granted") {
           const loc = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced,
           });
-          await checkNearbyIssues(
-            loc.coords.latitude,
-            loc.coords.longitude,
-            2, // 2km radius
-          );
+          await checkNearbyIssues(loc.coords.latitude, loc.coords.longitude, 2);
         }
       } catch (err) {
         console.error("Notification check error:", err);
       }
     };
-
     runNotificationChecks();
-  }, []); // runs once on home screen load
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -349,17 +330,17 @@ export default function CivicReportHome() {
         <View style={styles.header}>
           <View>
             <Text style={[styles.welcomeText, { color: colors.textSecondary }]}>
-              Welcome to
+              {t("welcomeBack")}
             </Text>
             <Text style={[styles.appName, { color: colors.text }]}>
-              CivicReport
+              CivicConnect
             </Text>
           </View>
           <TouchableOpacity
             style={[styles.bellButton, { backgroundColor: colors.card }]}
             activeOpacity={0.7}
           >
-            <BellIcon cardBg={colors.card} />
+            <BellIcon />
           </TouchableOpacity>
         </View>
 
@@ -371,9 +352,9 @@ export default function CivicReportHome() {
         >
           <PlusIcon />
           <View style={styles.reportBannerText}>
-            <Text style={styles.reportBannerTitle}>Report an Issue</Text>
+            <Text style={styles.reportBannerTitle}>{t("reportIssue")}</Text>
             <Text style={styles.reportBannerSubtitle}>
-              Help improve your community
+              {t("selectCategory")}
             </Text>
           </View>
           <ArrowRight color="#FFFFFF" />
@@ -381,11 +362,11 @@ export default function CivicReportHome() {
 
         {/* Overview */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-          OVERVIEW
+          {t("reportedIssues").toUpperCase()}
         </Text>
         <View style={styles.statsGrid}>
           <StatCard
-            label="TOTAL ISSUES"
+            label={t("reportedIssues").toUpperCase()}
             value={totalIssues.toString()}
             icon={<FileIcon color="#93C5FD" />}
             cardBg={colors.card}
@@ -401,7 +382,7 @@ export default function CivicReportHome() {
             labelColor={colors.textMuted}
           />
           <StatCard
-            label="IN PROGRESS"
+            label={t("inProgress").toUpperCase()}
             value={inProgressCount.toString()}
             icon={<FileOrangeIcon />}
             cardBg={colors.card}
@@ -409,7 +390,7 @@ export default function CivicReportHome() {
             labelColor={colors.textMuted}
           />
           <StatCard
-            label="RESOLVED"
+            label={t("resolved").toUpperCase()}
             value={resolved.toString()}
             icon={<CheckCircleIcon />}
             cardBg={colors.card}
@@ -421,7 +402,7 @@ export default function CivicReportHome() {
         {/* Recent Issues */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-            RECENT ISSUES
+            {t("recentIssues").toUpperCase()}
           </Text>
           <TouchableOpacity
             style={styles.viewAllBtn}
@@ -429,7 +410,7 @@ export default function CivicReportHome() {
               navigation.navigate("MainTabs", { screen: "Issues" })
             }
           >
-            <Text style={styles.viewAllText}>View All</Text>
+            <Text style={styles.viewAllText}>{t("viewAll")}</Text>
             <ChevronRight color="#2563EB" size={16} />
           </TouchableOpacity>
         </View>
@@ -447,7 +428,10 @@ export default function CivicReportHome() {
                 title={issue.description || "No description"}
                 badge={issue.status || "Pending"}
                 category={issue.category || "General"}
-                location={`Lat ${issue.latitude}, Lng ${issue.longitude}`}
+                location={
+                  (issue as any).address ||
+                  `Lat ${issue.latitude?.toFixed(3)}, Lng ${issue.longitude?.toFixed(3)}`
+                }
                 date={
                   issue.createdAt
                     ? new Date(issue.createdAt).toLocaleDateString("en-US", {
@@ -482,7 +466,7 @@ export default function CivicReportHome() {
           <InfoIcon bg={colors.accent} />
           <View style={styles.helpTextBox}>
             <Text style={[styles.helpTitle, { color: colors.primary }]}>
-              Need help?
+              {t("stillNeedHelp")}
             </Text>
             <Text
               style={[styles.helpSubtitle, { color: colors.textSecondary }]}
@@ -664,7 +648,6 @@ const styles = StyleSheet.create({
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   badgeText: { fontSize: 11, fontWeight: "600" },
   categoryText: { fontSize: 12 },
-  metaIcon: { fontSize: 11 },
   metaText: { fontSize: 11, marginRight: 6 },
   helpCard: {
     borderRadius: 14,
