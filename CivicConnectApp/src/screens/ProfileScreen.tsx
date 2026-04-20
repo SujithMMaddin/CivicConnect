@@ -22,6 +22,7 @@ import { fetchIssues, type Issue } from "../api/issues";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLanguage } from "../context/LanguageContext";
+
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 // --- Reusable Sub-Components ---
@@ -75,7 +76,6 @@ const SettingsItem = ({
       <View
         style={[
           styles.iconContainer,
-          destructive && { backgroundColor: "#FEE2E2" },
           { backgroundColor: destructive ? "#FEE2E2" : colors.inputBg },
         ]}
       >
@@ -116,7 +116,6 @@ const SettingsItem = ({
 // --- Main Screen ---
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>();
-
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const { isDark, toggleTheme, colors } = useTheme();
   const [user, setUser] = useState<any>(null);
@@ -145,6 +144,7 @@ export default function ProfileScreen() {
       loadData();
     }, []),
   );
+
   useEffect(() => {
     const loadPreferences = async () => {
       try {
@@ -158,10 +158,10 @@ export default function ProfileScreen() {
   }, []);
 
   const handleSignOut = async () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("signOut"), t("signOutConfirm"), [
+      { text: t("cancel"), style: "cancel" },
       {
-        text: "Sign Out",
+        text: t("signOut"),
         style: "destructive",
         onPress: async () => {
           await supabase.auth.signOut();
@@ -179,10 +179,14 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2563EB" />
-          <Text style={styles.loadingText}>Loading profile...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+            {t("loadingProfile")}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -221,21 +225,21 @@ export default function ProfileScreen() {
         {/* Stats Row */}
         <View style={styles.statsRow}>
           <StatCard
-            label="Reported"
+            label={t("reportedIssues")}
             value={totalReports.toString()}
             color="#111827"
             cardBg={colors.card}
             cardBorder={colors.border}
           />
           <StatCard
-            label="Resolved"
+            label={t("resolved")}
             value={resolvedReports.toString()}
             color="#10B981"
             cardBg={colors.card}
             cardBorder={colors.border}
           />
           <StatCard
-            label="Pending"
+            label={t("pending")}
             value={pendingReports.toString()}
             color="#F59E0B"
             cardBg={colors.card}
@@ -244,7 +248,9 @@ export default function ProfileScreen() {
         </View>
 
         {/* Account Section */}
-        <Text style={styles.sectionHeader}>ACCOUNT</Text>
+        <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>
+          {t("account")}
+        </Text>
         <View
           style={[
             styles.sectionCard,
@@ -253,27 +259,29 @@ export default function ProfileScreen() {
         >
           <SettingsItem
             icon="person-outline"
-            title="Personal Information"
+            title={t("personalInformation")}
             subtitle={user?.email || "No email"}
             onPress={() => navigation.navigate("PersonalInfo")}
           />
           <SettingsItem
             icon="shield-checkmark-outline"
-            title="Privacy & Security"
+            title={t("privacySecurity")}
             subtitle="Password, data settings"
             onPress={() => navigation.navigate("PrivacySecurity")}
           />
           <SettingsItem
             icon="document-text-outline"
-            title="My Reports"
-            subtitle={`${totalReports} issues reported`}
+            title={t("myReports")}
+            subtitle={`${totalReports} ${t("issuesReported")}`}
             isLast
             onPress={() => navigation.navigate("MyReports")}
           />
         </View>
 
         {/* Preferences Section */}
-        <Text style={styles.sectionHeader}>PREFERENCES</Text>
+        <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>
+          {t("preferences")}
+        </Text>
         <View
           style={[
             styles.sectionCard,
@@ -282,8 +290,8 @@ export default function ProfileScreen() {
         >
           <SettingsItem
             icon="notifications-outline"
-            title="Notifications"
-            subtitle="Push notifications for updates"
+            title={t("notifications")}
+            subtitle={t("pushNotifications")}
             showSwitch
             switchValue={notificationsEnabled}
             onSwitchChange={async (value: boolean) => {
@@ -296,23 +304,25 @@ export default function ProfileScreen() {
           />
           <SettingsItem
             icon="sunny-outline"
-            title="Dark Mode"
-            subtitle="Toggle dark theme"
+            title={t("darkMode")}
+            subtitle={t("toggleDarkTheme")}
             showSwitch
             switchValue={isDark}
             onSwitchChange={toggleTheme}
           />
           <SettingsItem
             icon="settings-outline"
-            title="App Settings"
-            subtitle="Language, region"
+            title={t("appSettings")}
+            subtitle={t("languageRegion")}
             isLast
             onPress={() => navigation.navigate("AppSettings")}
           />
         </View>
 
         {/* Support Section */}
-        <Text style={styles.sectionHeader}>SUPPORT</Text>
+        <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>
+          {t("support")}
+        </Text>
         <View
           style={[
             styles.sectionCard,
@@ -321,18 +331,18 @@ export default function ProfileScreen() {
         >
           <SettingsItem
             icon="help-circle-outline"
-            title="Help Center"
-            subtitle="FAQs and guides"
+            title={t("helpCenter")}
+            subtitle={t("faqsAndGuides")}
             onPress={() => navigation.navigate("HelpCenter")}
           />
           <SettingsItem
             icon="document-outline"
-            title="Terms of Service"
+            title={t("termsOfService")}
             onPress={() => navigation.navigate("TermsOfService")}
           />
           <SettingsItem
             icon="shield-outline"
-            title="Privacy Policy"
+            title={t("privacyPolicy")}
             isLast
             onPress={() => navigation.navigate("PrivacyPolicy")}
           />
@@ -351,7 +361,7 @@ export default function ProfileScreen() {
         >
           <SettingsItem
             icon="log-out-outline"
-            title="Sign Out"
+            title={t("signOut")}
             destructive
             isLast
             onPress={handleSignOut}
@@ -365,9 +375,9 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { marginTop: 12, fontSize: 15, color: "#64748B" },
+  loadingText: { marginTop: 12, fontSize: 15 },
   scrollContent: { padding: 20, paddingBottom: 40 },
   header: { flexDirection: "row", alignItems: "center", marginBottom: 25 },
   avatarContainer: {
@@ -382,27 +392,20 @@ const styles = StyleSheet.create({
     borderColor: "#BFDBFE",
   },
   userInfo: { flex: 1 },
-  userName: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 2,
-  },
-  userEmail: { fontSize: 13, color: "#6B7280", marginBottom: 2 },
-  userRole: { fontSize: 12, color: "#2563EB", fontWeight: "600" },
+  userName: { fontSize: 20, fontWeight: "700", marginBottom: 2 },
+  userEmail: { fontSize: 13, marginBottom: 2 },
+  userRole: { fontSize: 12, fontWeight: "600" },
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 30,
   },
   statCard: {
-    backgroundColor: "#FFF",
     width: "31%",
     paddingVertical: 15,
     borderRadius: 12,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#F3F4F6",
     shadowColor: "#000",
     shadowOpacity: 0.04,
     shadowRadius: 4,
@@ -413,16 +416,13 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#9CA3AF",
     marginBottom: 10,
     marginLeft: 5,
     letterSpacing: 1,
   },
   sectionCard: {
-    backgroundColor: "#FFF",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#F3F4F6",
     marginBottom: 20,
     overflow: "hidden",
     shadowColor: "#000",
@@ -435,20 +435,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
   },
   iconContainer: {
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: "#F3F4F6",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
   settingsTextContainer: { flex: 1 },
-  settingsTitle: { fontSize: 15, fontWeight: "500", color: "#111827" },
-  settingsSubtitle: { fontSize: 12, color: "#9CA3AF", marginTop: 2 },
+  settingsTitle: { fontSize: 15, fontWeight: "500" },
+  settingsSubtitle: { fontSize: 12, marginTop: 2 },
   versionText: {
     textAlign: "center",
     color: "#9CA3AF",
