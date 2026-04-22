@@ -687,6 +687,40 @@ export default function ReportIssueScreen() {
     }
   };
 
+  const uploadImageToCloudinary = async (
+    localUri: string,
+  ): Promise<string | null> => {
+    try {
+      const CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME;
+      const UPLOAD_PRESET = process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+      const formData = new FormData();
+      formData.append("file", {
+        uri: localUri,
+        type: "image/jpeg",
+        name: "issue_photo.jpg",
+      } as any);
+      formData.append("upload_preset", UPLOAD_PRESET);
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+
+      const data = await response.json();
+      if (data.secure_url) {
+        return data.secure_url;
+      }
+      return null;
+    } catch (err) {
+      console.error("Cloudinary upload error:", err);
+      return null;
+    }
+  };
+
   const handleSubmit = async () => {
     if (!description.trim()) {
       Alert.alert("Description Required", "Please describe the issue.");
@@ -697,6 +731,17 @@ export default function ReportIssueScreen() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
+      // Upload all photos to Cloudinary first
+      let uploadedUrls: string[] = [];
+      if (photos.length > 0) {
+        const uploadPromises = photos.map((uri) =>
+          uploadImageToCloudinary(uri),
+        );
+        const results = await Promise.all(uploadPromises);
+        uploadedUrls = results.filter((url): url is string => url !== null);
+      }
+
       const payload = {
         category,
         description,
@@ -708,7 +753,7 @@ export default function ReportIssueScreen() {
         status: "Pending",
         priority: category === "Water" ? "High" : "Medium",
         userId: user?.id ?? null,
-        imageUrls: photos.length > 0 ? photos : [],
+        imageUrls: uploadedUrls,
       };
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/issues`, {
         method: "POST",
