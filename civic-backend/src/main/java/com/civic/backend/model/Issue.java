@@ -2,6 +2,7 @@ package com.civic.backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -46,8 +47,10 @@ private String assignedDepartment;
 @Column(nullable = true)  
 private Boolean departmentConfirmed;
 
-    @ElementCollection
-    private List<String> imageUrls;
+    @ElementCollection(fetch = FetchType.EAGER)
+@CollectionTable(name = "issue_image_urls", joinColumns = @JoinColumn(name = "issue_id"))
+@Column(name = "image_urls")
+private List<String> imageUrls = new ArrayList<>();
 
     public Issue() {
     }

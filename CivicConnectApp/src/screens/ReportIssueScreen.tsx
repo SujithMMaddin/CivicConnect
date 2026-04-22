@@ -708,6 +708,7 @@ export default function ReportIssueScreen() {
         status: "Pending",
         priority: category === "Water" ? "High" : "Medium",
         userId: user?.id ?? null,
+        imageUrls: photos.length > 0 ? photos : [],
       };
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/issues`, {
         method: "POST",
